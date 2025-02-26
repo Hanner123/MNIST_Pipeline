@@ -6,3 +6,4 @@ __pycache__/
 # Virtual Environment
 venv/
 /training_data.json
+/training_data2.json
