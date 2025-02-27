@@ -8,7 +8,7 @@ stages:
     - train.lr
     outs:
     - full_model.pth
-    - training_data2.json
+    - training_data.json
     - test_data.pt
   evaluate:
     cmd: python evaluate.py

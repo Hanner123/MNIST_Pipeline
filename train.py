@@ -120,7 +120,7 @@ def train():
     learning_rate = params["train"]["lr"]
     # Prüfen, ob eine GPU verfügbar ist, andernfalls CPU verwenden
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Verwende Gerät: {device}")
+    print(f"Verwende das Gerät: {device}")
 
     # download dataset
     dataset = MNIST(root = 'data/',train=True,transform=ToTensor())
@@ -156,7 +156,7 @@ def train():
 
     history = fit(10,learning_rate,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
 
-    with open("training_data2.json", "w") as f:
+    with open("training_data.json", "w") as f:
         json.dump(history, f, indent = 4)
 
     torch.save(model, "full_model.pth")

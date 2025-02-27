@@ -5,8 +5,8 @@ __pycache__/
 
 # Virtual Environment
 venv/
-/training_data.json
 /full_model.pth
-/training_data2.json
 /metrics.json
 /confusion_matrix.csv
+/training_data.json
+/test_data.pt

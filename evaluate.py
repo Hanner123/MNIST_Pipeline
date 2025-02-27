@@ -62,8 +62,8 @@ def evaluate_model(model, test_loader):
 
             correct_predictions += (predicted == labels).sum().item()
             total_predictions += labels.size(0)
-    print("correct: ", correct_predictions)
-    print("total: ", total_predictions)
+    print("Correct: ", correct_predictions)
+    print("Total: ", total_predictions)
     accuracy = correct_predictions / total_predictions
     average_loss = total_loss / len(test_loader)
     print(f"Test Loss: {average_loss:.4f}, Test Accuracy: {accuracy:.4f}")
