@@ -1,0 +1,12 @@
+[core]
+    remote = sciebo_remote
+['remote "onedrive_remote"']
+    url = webdavs://d.docs.live.net/E1631AF9ED594E10/Documents/dvc_data
+    user = hannakattermann@gmail.com
+    ask_password = true
+['remote "storage"']
+    url = gdrive://1Iaw7ZqmitpB0utv9FPo9V1nObjDA8R5B
+['remote "sciebo_remote"']
+    url = webdavs://uni-paderborn.sciebo.de/remote.php/webdav/
+    user = haka@uni-paderborn.de
+    ask_password = true
