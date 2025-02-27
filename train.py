@@ -147,7 +147,7 @@ def train():
 
     print(evaluate(model,val_loader)) # Modell wird vor dem training evaluiert, um es vergleichen zu können (es sollte ca 10% genauigkeit ergeben)
 
-    history = fit(15,0.5,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
+    history = fit(5,0.5,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
 
     with open("training_data2.json", "w") as f:
         json.dump(history, f, indent = 4)
