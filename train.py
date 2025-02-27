@@ -11,8 +11,12 @@ from torch.utils.data import random_split
 import matplotlib.pyplot as plt
 from torchmetrics.classification import Accuracy
 import json
+import yaml
 
-
+def load_params():
+    with open('params.yaml', 'r') as f:
+        params = yaml.safe_load(f)
+    return params
 
 def accuracy(outputs,labels):
     _,preds = torch.max(outputs,dim = 1) ## _ here max prob will come and we don't require it now
@@ -109,6 +113,11 @@ def fit(epochs,lr,model,train_loder,val_loader,opt_func = torch.optim.SGD):
 
 
 def train():
+    # Lade Parameter aus der YAML-Datei
+    params = load_params()
+    print(params)
+    batch_size = params["train"]["batch_size"]
+    learning_rate = params["train"]["lr"]
     # Prüfen, ob eine GPU verfügbar ist, andernfalls CPU verwenden
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Verwende Gerät: {device}")
@@ -125,7 +134,6 @@ def train():
     print(len(train_ds), len(val_ds))
 
     # batch size for every iteration in each spoch
-    batch_size = 128
     #dataloaders: to load dataset in batches and to shuffle the data -> no overfitting, parallel processes
     train_loder = DataLoader(train_ds,batch_size,shuffle=True,num_workers=4,pin_memory=True)
     val_loader = DataLoader(val_ds,batch_size,shuffle=True,num_workers=4,pin_memory=True)
@@ -146,7 +154,7 @@ def train():
 
     print(evaluate(model,val_loader)) # Modell wird vor dem training evaluiert, um es vergleichen zu können (es sollte ca 10% genauigkeit ergeben)
 
-    history = fit(25,0.5,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
+    history = fit(10,learning_rate,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
 
     with open("training_data2.json", "w") as f:
         json.dump(history, f, indent = 4)

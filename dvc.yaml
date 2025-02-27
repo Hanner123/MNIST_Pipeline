@@ -1,0 +1,21 @@
+stages:
+  train:
+    cmd: python train.py
+    deps:
+    - train.py
+    params:
+    - train.batch_size
+    - train.lr
+    outs:
+    - full_model.pth
+    - training_data2.json
+    - test_data.pt
+  evaluate:
+    cmd: python evaluate.py
+    deps:
+    - evaluate.py
+    - test_data.pt
+    - full_model.pth
+    outs:
+    - metrics.json
+    - confusion_matrix.csv
