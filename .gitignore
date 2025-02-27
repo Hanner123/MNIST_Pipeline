@@ -9,3 +9,5 @@ venv/
 /training_data2.json
 /full_model.pth
 /test_data.pt
+/confusion_matrix.csv
+/metrics.json
