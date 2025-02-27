@@ -10,11 +10,11 @@ stages:
     params:
       params.yaml:
         train.batch_size: 128
-        train.lr: 0.05
+        train.lr: 0.5
     outs:
     - path: full_model.pth
       hash: md5
-      md5: c443486a91fad97aaa70b28210eb72b8
+      md5: 0b1c1347c0bed44e0b504f146d571b40
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 0ecf463c74550858696e2168006b5e35
-      size: 908
+      md5: a659a5e97ae9ea487880585d0d3ad8a6
+      size: 920
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5131
     - path: full_model.pth
       hash: md5
-      md5: c443486a91fad97aaa70b28210eb72b8
+      md5: 0b1c1347c0bed44e0b504f146d571b40
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -42,9 +42,9 @@ stages:
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: 81f0c80aa5bdb6bfe51ef65e77f21974
-      size: 313
+      md5: 5f5060f39873d4c6b6af738c956289e2
+      size: 296
     - path: metrics.json
       hash: md5
-      md5: e019da8533bc8c5b321731d503aa487d
-      size: 782
+      md5: dfcfb2c1143ac60403142c87760f5f5e
+      size: 780
