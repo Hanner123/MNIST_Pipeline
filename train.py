@@ -109,7 +109,6 @@ def fit(epochs,lr,model,train_loder,val_loader,opt_func = torch.optim.SGD):
 
 
 def train():
-    # Dein Trainingscode hier
     # Prüfen, ob eine GPU verfügbar ist, andernfalls CPU verwenden
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Verwende Gerät: {device}")
