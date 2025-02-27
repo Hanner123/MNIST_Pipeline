@@ -1,0 +1,5 @@
+outs:
+- md5: 85ba9721e8544873a4c67cc49a237d99
+  size: 7921764
+  hash: md5
+  path: test_data.pt

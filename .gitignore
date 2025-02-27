@@ -7,3 +7,5 @@ __pycache__/
 venv/
 /training_data.json
 /training_data2.json
+/full_model.pth
+/test_data.pt
