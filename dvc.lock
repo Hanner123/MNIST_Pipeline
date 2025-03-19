@@ -9,12 +9,12 @@ stages:
       size: 7284
     params:
       params.yaml:
-        train.batch_size: 16
+        train.batch_size: 128
         train.lr: 0.5
     outs:
     - path: full_model.pth
       hash: md5
-      md5: 2fe52a54e247031fd93a29d6273a9ced
+      md5: 52740cb33734518202f36a6a88e8befe
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 026f0c0cd9b89a23e7b96b39eee18ce6
-      size: 1373
+      md5: 9fa7d3d774ef9a25b8cd306f63442a12
+      size: 1374
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5782
     - path: full_model.pth
       hash: md5
-      md5: 2fe52a54e247031fd93a29d6273a9ced
+      md5: 52740cb33734518202f36a6a88e8befe
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -41,20 +41,20 @@ stages:
       size: 7921764
     params:
       params.yaml:
-        train.batch_size: 16
+        train.batch_size: 128
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: 9d352108ae9a021788d2324f148a70f6
-      size: 306
+      md5: eff0fa2818b0fa7c2f9d886bf907a830
+      size: 297
     - path: loss.png
       hash: md5
-      md5: 1bf622142e8fbd3dc0ee359f4d1edfd5
-      size: 31744
+      md5: 6cf2db28f44fe6ab3cf22bb85ccf7b44
+      size: 25163
     - path: metrics.json
       hash: md5
-      md5: d7335b764cb0c6634025e23af2cdab3a
-      size: 932
+      md5: 3f6a4d9e4cd2d7798a8fdb1ed990aa92
+      size: 928
   export:
     cmd: python export_model.py
     deps:
@@ -64,23 +64,23 @@ stages:
       size: 720
     - path: full_model.pth
       hash: md5
-      md5: 2fe52a54e247031fd93a29d6273a9ced
+      md5: 52740cb33734518202f36a6a88e8befe
       size: 104808
     params:
       params.yaml:
-        train.batch_size: 16
+        train.batch_size: 128
     outs:
     - path: mnist_model.onnx
       hash: md5
-      md5: 5c1070f1c4c573d665eef40ebdbd2ab5
-      size: 107739
+      md5: 050288a8b5142cec90d15c73aafa4b49
+      size: 107747
   measure:
     cmd: python measure.py
     deps:
     - path: mnist_model.onnx
       hash: md5
-      md5: 5c1070f1c4c573d665eef40ebdbd2ab5
-      size: 107739
+      md5: 050288a8b5142cec90d15c73aafa4b49
+      size: 107747
     - path: test_data.pt
       hash: md5
       md5: 85ba9721e8544873a4c67cc49a237d99
@@ -88,5 +88,5 @@ stages:
     outs:
     - path: tensorrt_inteference.txt
       hash: md5
-      md5: 04d5ff1bed662f7fa7a6b64fe25777f9
+      md5: 616b98d1ad72a4cac7a944c50b882ada
       size: 255
