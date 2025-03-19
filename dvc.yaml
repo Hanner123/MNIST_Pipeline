@@ -16,6 +16,37 @@ stages:
     - evaluate.py
     - test_data.pt
     - full_model.pth
+    params:
+    - train.batch_size
     outs:
-    - metrics.json
+    - loss.png
     - confusion_matrix.csv
+    - metrics.json
+  export:
+    cmd: python export_model.py
+    deps:
+    - export_model.py
+    - full_model.pth
+    params:
+    - train.batch_size
+    outs:
+    - mnist_model.onnx
+  measure:
+    cmd: python measure.py
+    deps:
+    - test_data.pt
+    - mnist_model.onnx
+    outs:
+    - tensorrt_inteference.txt
+metrics:
+- metrics.json
+plots:
+- metrics.json:
+    template: simple
+    x: Recall
+    y: Specificity
+- loss.png
+
+
+
+#tensor.rt latenz, nvidia (lädt onyx) accuracy nochmal messen, und durchsatz

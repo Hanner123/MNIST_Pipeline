@@ -12,3 +12,10 @@ venv/
 /test_data.pt
 /cuda_12.1.1_530.30.02_linux.run
 /cudnn-local-repo-ubuntu2204-9.7.1_1.0-1_amd64.deb
+/eval
+/loss.png
+/mnist_model.onnx
+/dvc_plots
+/tensorrt_inteference.txt
+/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb
+/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb.1

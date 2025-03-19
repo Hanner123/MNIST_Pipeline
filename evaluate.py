@@ -5,6 +5,7 @@ from train import MnistModel  # Modell importieren
 from torch.utils.data.dataloader import DataLoader
 from sklearn.metrics import confusion_matrix
 import csv
+import yaml
 
 
 #function that can move data and model to a chosen device. (wichtig für GPU-Nutzung, da standartmäßig oft die CPU verwendet wird - es gibt probleme, wenn manche berechnungen auf der GPU und manche auf der CPU laufen)
@@ -13,6 +14,11 @@ def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
         return [to_device(x,device) for x in data]
     return data.to(device,non_blocking=True)
+
+def load_params():
+    with open('params.yaml', 'r') as f:
+        params = yaml.safe_load(f)
+    return params
 
 # um dataloaders auf gpu zu verschieben 
 # Es stellt sicher, dass jede Batch von Daten, die im DataLoader verarbeitet wird, auf das angegebene Gerät verschoben wird, bevor sie ins Modell übergeben wird.
@@ -38,7 +44,8 @@ def evaluate_model(model, test_loader):
 
     all_labels = []
     all_preds = []
-
+    k = 0
+    k_max = int(10000/batch_size)
     with torch.no_grad():  # Keine Gradienten berechnen während der Evaluation
         for inputs, labels in test_loader:
             # wieder zurück auf die GPU schieben
@@ -46,6 +53,7 @@ def evaluate_model(model, test_loader):
             
             # Forward Pass
             outputs = model(inputs)
+            # print(outputs[0])
             
             # Verlust berechnen
             loss = criterion(outputs, labels)
@@ -62,6 +70,9 @@ def evaluate_model(model, test_loader):
 
             correct_predictions += (predicted == labels).sum().item()
             total_predictions += labels.size(0)
+            k = k + 1
+            if k == k_max:
+                break
     print("Correct: ", correct_predictions)
     print("Total: ", total_predictions)
     accuracy = correct_predictions / total_predictions
@@ -82,14 +93,14 @@ def evaluate_model(model, test_loader):
         for i in range(cm.shape[0]):
             writer.writerow([str(i)] + cm[i].tolist())
             
-    print("Confusion Matrix:")
-    print(cm)
+    # print("Confusion Matrix:")
+    # print(cm)
 
-    metrics = {}
+    metrics = []
     # Berechnung von Recall und Specificity
     for x in range(10):
-        print("  ")
-        print("Metrics for Number: ", x)
+        # print("  ")
+        # print("Metrics for Number: ", x)
         TP = cm[x, x]  # True Positive
         #print("TP:", TP)
 
@@ -119,24 +130,39 @@ def evaluate_model(model, test_loader):
         # Specificity
         specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
 
-        print(f"Recall: {recall:.6f}")
-        print(f"Specificity: {specificity:.6f}")
+        # print(f"Recall: {recall:.6f}")
+        # print(f"Specificity: {specificity:.6f}")
 
-        metrics[x] = {
+        metrics.append ({
+        'Class': x,
         'Recall': round(recall, 6),
         'Specificity': round(specificity, 6)
-        }
+        })
 
     with open('metrics.json', 'w') as json_file:
         json.dump(metrics, json_file, indent=4)
+
+
+    with open("training_data.json", "r") as f:
+        history = json.load(f)
+    losses = [x['val_loss'] for x in history]
+    plt.plot(losses, '-x')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.title('Loss vs. No. of epochs')
+    plt.savefig('loss.png')
 
     return average_loss, accuracy
 
 
 
+
+params = load_params()
+batch_size = params["train"]["batch_size"]
+
 test_data = torch.load("test_data.pt", map_location="cpu",weights_only=False)                                               # test daten in cpu laden
 model = torch.load("full_model.pth", map_location="cuda:0", weights_only=False)                                             # Modell in gpu laden
 
-test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=128, shuffle=True, num_workers=0, pin_memory=True), "cpu")  # test_loader in die cpu laden, wegen numpy im evaluate_model
+test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), "cpu")  # test_loader in die cpu laden, wegen numpy im evaluate_model
 
 evaluate_model(model, test_loader)
