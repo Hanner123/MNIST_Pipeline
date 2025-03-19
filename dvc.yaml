@@ -36,6 +36,8 @@ stages:
     deps:
     - test_data.pt
     - mnist_model.onnx
+    params:
+    - train.batch_size
     outs:
     - tensorrt_inteference.txt
 metrics:

@@ -85,6 +85,9 @@ stages:
       hash: md5
       md5: 85ba9721e8544873a4c67cc49a237d99
       size: 7921764
+    params:
+      params.yaml:
+        train.batch_size: 128
     outs:
     - path: tensorrt_inteference.txt
       hash: md5
