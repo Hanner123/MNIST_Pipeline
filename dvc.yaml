@@ -2,53 +2,50 @@ stages:
   train:
     cmd: python train.py
     deps:
-    - train.py
+      - train.py
     params:
-    - train.batch_size
-    - train.lr
+      - train.batch_size
+      - train.lr
     outs:
-    - full_model.pth
-    - training_data.json
-    - test_data.pt
+      - full_model.pth
+      - training_data.json
+      - test_data.pt
   evaluate:
     cmd: python evaluate.py
     deps:
-    - evaluate.py
-    - test_data.pt
-    - full_model.pth
+      - evaluate.py
+      - test_data.pt
+      - full_model.pth
     params:
-    - train.batch_size
+      - train.batch_size
     outs:
-    - loss.png
-    - confusion_matrix.csv
-    - metrics.json
+      - loss.png
+      - confusion_matrix.csv
+    plots:
+     - metrics.json:
+         template: simple
+         x: Recall
+         y: Specificity
+         cache: false
   export:
     cmd: python export_model.py
     deps:
-    - export_model.py
-    - full_model.pth
+      - export_model.py
+      - full_model.pth
     params:
-    - train.batch_size
+      - train.batch_size
     outs:
-    - mnist_model.onnx
+      - mnist_model.onnx
   measure:
     cmd: python measure.py
     deps:
-    - test_data.pt
-    - mnist_model.onnx
+      - test_data.pt
+      - measure.py
+      - mnist_model.onnx
     params:
-    - train.batch_size
+      - train.batch_size
     outs:
-    - tensorrt_inteference.txt
-metrics:
-- metrics.json:
-plots:
-- metrics.json:
-    template: simple
-    x: Recall
-    y: Specificity
-    cache: false
-- loss.png
+      - tensorrt_inteference.txt
 
 
 

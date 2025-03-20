@@ -77,6 +77,10 @@ stages:
   measure:
     cmd: python measure.py
     deps:
+    - path: measure.py
+      hash: md5
+      md5: 37022e9e74e18af8325272b320a6fd80
+      size: 8595
     - path: mnist_model.onnx
       hash: md5
       md5: 050288a8b5142cec90d15c73aafa4b49
