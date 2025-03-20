@@ -41,12 +41,13 @@ stages:
     outs:
     - tensorrt_inteference.txt
 metrics:
-- metrics.json
+- metrics.json:
 plots:
 - metrics.json:
     template: simple
     x: Recall
     y: Specificity
+    cache: false
 - loss.png
 
 
