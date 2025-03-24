@@ -102,7 +102,7 @@ def fit(epochs,lr,model,train_loder,val_loader,opt_func = torch.optim.SGD):
     for epoch in range(epochs):
         for batch in train_loder:
             loss = model.training_step(batch) # predicts (forward-step) and determines loss
-            loss.backward() # berechnet die Gradienten des Verlusts bezüglich der Modellparameter (Gewichte und Biases), bei den Modellparametern gespeichert, Kettenregel Defferentation, Richtung und Gröe für Änderung der Gewichte
+            loss.backward() # berechnet die Gradienten des Verlusts bezüglich der Modellparameter (Gewichte und Biases)
             optimizer.step() # used to update the parameters
             optimizer.zero_grad() # Clears the gradients of optimizer
         result = evaluate(model,val_loader) # evaluierung am ende der epoche
@@ -154,7 +154,7 @@ def train():
 
     print(evaluate(model,val_loader)) # Modell wird vor dem training evaluiert, um es vergleichen zu können (es sollte ca 10% genauigkeit ergeben)
 
-    history = fit(15,learning_rate,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
+    history = fit(20,learning_rate,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
 
     with open("training_data.json", "w") as f:
         json.dump(history, f, indent = 4)

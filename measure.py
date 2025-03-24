@@ -4,6 +4,7 @@ from torch.utils.data.dataloader import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import json
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -175,6 +176,8 @@ print("Accuracy: ", float(correct_predictions)/float(total_predictions))
 
 np.savetxt("tensorrt_inteference.txt", output)
 
+throughput_log = []
+
 for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1048, 2096]:
     #Latency:
     print("For Batch Size: ", batch_size)
@@ -194,5 +197,17 @@ for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1048, 2096]:
     print(f"Gemessene durchschnittliche Latenz mit Datentransfer: {latency_datatransfer:.4f} ms")
     print(f"Gesamtzeit: {end_time-start_time:.4f} s")
     num_batches = int(10000/batch_size)
-    print(f"Throughput: {num_batches/(end_time-start_time):.4f} Batches/Sekunde")
-    print(f"Throughput: {(num_batches*batch_size)/(end_time-start_time):.4f} Bilder/Sekunde")
+    throughput_batches = num_batches/(end_time-start_time)  # ungenau wegen 10000/batchsize!!!
+    print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
+    throughput_images = (num_batches*batch_size)/(end_time-start_time)
+    print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde") # in Log datei speichern
+
+    throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
+    throughput_log.append(throughput)
+
+output_file = "throughput_results.json"
+output_file_2 = "throughput_results_2.json"
+with open(output_file, "w") as f:
+    json.dump(throughput_log, f, indent=4)
+with open(output_file_2, "w") as f:
+    json.dump(throughput_log, f, indent=4)

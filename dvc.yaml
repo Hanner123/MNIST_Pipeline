@@ -42,11 +42,20 @@ stages:
       - test_data.pt
       - measure.py
       - mnist_model.onnx
+      - bar_1.json
+      - bar_2.json
     params:
       - train.batch_size
     outs:
       - tensorrt_inteference.txt
-
-
-
-#tensor.rt latenz, nvidia (lädt onyx) accuracy nochmal messen, und durchsatz
+    plots:
+     -  throughput_results.json:
+         template: bar_2.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput_results_2.json:
+         template: bar_1.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
