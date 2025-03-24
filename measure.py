@@ -2,9 +2,7 @@ import tensorrt as trt
 import torch
 from torch.utils.data.dataloader import DataLoader
 import numpy as np
-import onnx
 import matplotlib.pyplot as plt
-import yaml
 import time
 
 def to_device(data,device):
@@ -44,36 +42,52 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
     """
     Funktion zur Bestimmung der Inferenzlatenz.
     """
-    total_time = 0  # Gesamte Laufzeit aller gemessenen Batches
+    total_time = 0
+    total_time_synchronize = 0
+    total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
     iterations = 0  # Anzahl gemessener Batches
     k_max = int(10000/batch_size)
     for images, labels in test_loader:
         images = images.float()
+
+ 
+        start_time_datatransfer = time.time()  # Startzeit messen
         device_input.copy_(images)  # Eingabe auf GPU übertragen
 
-        # Synchronisierung vor Messung, um vorherige Operationen abzuschließen
+        start_time_synchronize = time.time()  # Startzeit messen
         torch_stream.synchronize()  
-        start_time = time.time()  # Startzeit messen
+
+        start_time_inteference = time.time()  # Startzeit messen
 
         with torch.cuda.stream(torch_stream):
             context.execute_async_v3(stream_ptr)  # TensorRT-Inferenz durchführen
         torch_stream.synchronize()  # GPU-Synchronisation nach Inferenz
-        end_time = time.time()  # Endzeit messen
 
-        latency = end_time - start_time  # Latenz für diesen Batch
+        end_time = time.time()
+
+        output = device_output.cpu().numpy()
+        end_time_datatransfer = time.time() 
+
+        latency = end_time - start_time_inteference  # Latenz für diesen Batch
+        latency_synchronize = end_time - start_time_synchronize  # Latenz für diesen Batch
+        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  # Latenz für diesen Batch
+
         total_time += latency
-        # print(f"latency {latency*1000:.4f}ms")
+        total_time_synchronize += latency_synchronize
+        total_time_datatransfer += latency_datatransfer
+
+
         iterations += 1
         if iterations == k_max: break
 
-    # Durchschnittliche Latenz berechnen
-    # print("Latency in seconds: ", (total_time / iterations))
-    # print("iterations", iterations)
-    # print("latency - total time", total_time)
-    # print("Throughput with Latency, per batch: ", 1.0/(total_time / iterations))
-    # print("Throughput with Latency, per image: ", 1.0/(total_time / iterations)*batch_size)
+        # labels auswerten - zeit messen, bar plots
+
     average_latency = (total_time / iterations) * 1000  # In Millisekunden
-    return average_latency
+    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
+    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
+
+
+    return average_latency, average_latency_synchronize, average_latency_datatransfer
 
 def test():
     start_time = time.time()
@@ -81,44 +95,6 @@ def test():
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Verstrichene Zeit: {elapsed_time} Sekunden")
-
-def measure_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size):
-    """
-    Funktion zur Messung des Throughputs (Bilder/Sekunde).
-    """
-    total_time = 0  # Gesamte Zeit für die Verarbeitung aller Daten
-    total_images = 0  # Gesamtzahl der verarbeiteten Bilder
-
-    # Starte die Messung
-    iterations = 0
-    iterations_max = int(10000/batch_size)
-    for images, labels in test_loader:
-        images = images.float()
-        device_input.copy_(images)  # Eingabe auf GPU kopieren
-
-        # Synchronisierung vor der Messung
-        torch_stream.synchronize()
-        start_time = time.time()  # Startzeit messen
-        
-        with torch.cuda.stream(torch_stream):
-            context.execute_async_v3(stream_ptr)  # TensorRT-Inferenz
-        torch_stream.synchronize()  # Synchronisiere nach Abschluss der GPU-Inferenz
-
-        end_time = time.time()  # Endzeit messen
-
-        # Berechne Dauer für diesen Batch und füge sie hinzu
-        batch_time = end_time - start_time
-        total_time += batch_time
-
-        # Addiere die Anzahl der Bilder in diesem Batch
-        total_images += images.shape[0]
-        iterations = iterations + 1
-        if iterations == iterations_max: break
-    # print("Images anzahl: ", total_images)
-    # print("Zeit in sekunden: ", total_time)
-    # Berechne den Throughput: Bildern pro Sekunde
-    throughput = total_images / total_time if total_time > 0 else 0
-    return throughput
 
 
 batch_size = 1
@@ -199,10 +175,11 @@ print("Accuracy: ", float(correct_predictions)/float(total_predictions))
 
 np.savetxt("tensorrt_inteference.txt", output)
 
-for batch_size in [1, 2, 4, 8, 16, 32, 64, 128]:
+for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1048, 2096]:
     #Latency:
     print("For Batch Size: ", batch_size)
-    latency_ms = measure_latency(
+    start_time = time.time()
+    latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
         context=context,
         test_loader=test_loader,
         device_input=device_input,
@@ -211,17 +188,11 @@ for batch_size in [1, 2, 4, 8, 16, 32, 64, 128]:
         torch_stream=torch_stream,
         batch_size=batch_size
     )
-    print(f"Gemessene durchschnittliche Latenz: {latency_ms:.4f} ms")
-
-    # Throughput
-    throughput = measure_throughput(
-        context=context,
-        test_loader=test_loader,
-        device_input=device_input,
-        device_output=device_output,
-        stream_ptr=stream_ptr,
-        torch_stream=torch_stream,
-        batch_size=batch_size
-    )
-    print(f"Gemessener Throughput: {throughput:.2f} Bilder/Sekunde")
-    print(f"Gemessener Throughput: {throughput/batch_size:.2f} Batches/Sekunde")
+    end_time = time.time()
+    print(f"Gemessene durchschnittliche Latenz für Inteferenz: {latency_ms:.4f} ms")
+    print(f"Gemessene durchschnittliche Latenz mit Synchronisation: {latency_synchronize:.4f} ms")
+    print(f"Gemessene durchschnittliche Latenz mit Datentransfer: {latency_datatransfer:.4f} ms")
+    print(f"Gesamtzeit: {end_time-start_time:.4f} s")
+    num_batches = int(10000/batch_size)
+    print(f"Throughput: {num_batches/(end_time-start_time):.4f} Batches/Sekunde")
+    print(f"Throughput: {(num_batches*batch_size)/(end_time-start_time):.4f} Bilder/Sekunde")

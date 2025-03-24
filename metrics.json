@@ -1,52 +1,52 @@
 [
     {
         "Class": 0,
-        "Recall": 0.979571,
-        "Specificity": 0.996789
+        "Recall": 0.980592,
+        "Specificity": 0.995551
     },
     {
         "Class": 1,
-        "Recall": 0.992056,
-        "Specificity": 0.99696
+        "Recall": 0.984113,
+        "Specificity": 0.995825
     },
     {
         "Class": 2,
-        "Recall": 0.981553,
-        "Specificity": 0.993789
+        "Recall": 0.943689,
+        "Specificity": 0.995195
     },
     {
         "Class": 3,
-        "Recall": 0.978175,
-        "Specificity": 0.9921
+        "Recall": 0.949405,
+        "Specificity": 0.990107
     },
     {
         "Class": 4,
-        "Recall": 0.966327,
-        "Specificity": 0.997707
+        "Recall": 0.95102,
+        "Specificity": 0.993826
     },
     {
         "Class": 5,
-        "Recall": 0.935955,
-        "Specificity": 0.997624
+        "Recall": 0.914607,
+        "Specificity": 0.994367
     },
     {
         "Class": 6,
-        "Recall": 0.971757,
-        "Specificity": 0.997712
+        "Recall": 0.955021,
+        "Specificity": 0.994071
     },
     {
         "Class": 7,
-        "Recall": 0.94742,
-        "Specificity": 0.997242
+        "Recall": 0.940604,
+        "Specificity": 0.994151
     },
     {
         "Class": 8,
-        "Recall": 0.946557,
-        "Specificity": 0.996007
+        "Recall": 0.918808,
+        "Specificity": 0.993969
     },
     {
         "Class": 9,
-        "Recall": 0.960317,
-        "Specificity": 0.995871
+        "Recall": 0.933532,
+        "Specificity": 0.992316
     }
 ]
