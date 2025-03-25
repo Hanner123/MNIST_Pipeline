@@ -205,14 +205,12 @@ for batch_size in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
     throughput_images = (num_batches*batch_size)/(end_time-start_time)
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
-    latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
-    latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": latency_synchronize}
-    latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": latency_datatransfer}
+    log_latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
+    log_latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": (latency_synchronize-latency_ms)}
+    log_latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": (latency_datatransfer-latency_synchronize)}
     throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
     throughput_log.append(throughput)
-    latency_log.extend([latency_inteference, latency_synchronize, latency_datatransfer])
-    # latency_log.append(latency_synchronize)
-    # latency_log.append(latency_datatransfer)
+    latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
 
 
 save_json(throughput_log, "throughput_results.json")
