@@ -44,6 +44,7 @@ stages:
       - mnist_model.onnx
       - bar_1.json
       - bar_2.json
+      - bar_3.json
     params:
       - train.batch_size
     outs:
@@ -58,4 +59,9 @@ stages:
          template: bar_1.json
          x: batch_size
          y: throughput_images_per_s
+         cache: false
+     - latency_results.json:
+         template: bar_3.json
+         x: batch_size
+         y: value
          cache: false

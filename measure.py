@@ -33,11 +33,11 @@ def accuracy(labels, outputs):
         if predicted == label:
             correct_predictions = correct_predictions + 1
         i = i+1
-    # print("accuracy", float(correct_predictions)/float(total_predictions))
-    # print("Correct Predictions:", correct_predictions)
-    # print("Total Predictions:", total_predictions)
     return correct_predictions, total_predictions
 
+def save_json(log, filepath):
+    with open(filepath, "w") as f:
+        json.dump(log, f, indent=4)
 
 def measure_latency(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size=1):
     """
@@ -177,8 +177,11 @@ print("Accuracy: ", float(correct_predictions)/float(total_predictions))
 np.savetxt("tensorrt_inteference.txt", output)
 
 throughput_log = []
+latency_log = []
 
-for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1048, 2096]:
+for batch_size in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 
+ 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 
+ 3584, 4096]:
     #Latency:
     print("For Batch Size: ", batch_size)
     start_time = time.time()
@@ -192,22 +195,26 @@ for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1048, 2096]:
         batch_size=batch_size
     )
     end_time = time.time()
-    print(f"Gemessene durchschnittliche Latenz für Inteferenz: {latency_ms:.4f} ms")
-    print(f"Gemessene durchschnittliche Latenz mit Synchronisation: {latency_synchronize:.4f} ms")
-    print(f"Gemessene durchschnittliche Latenz mit Datentransfer: {latency_datatransfer:.4f} ms")
+    print(f"Gemessene durchschnittliche Latenz für Inteferenz : {latency_ms:.4f} ms")
+    print(f"Gemessene durchschnittliche Latenz mit Synchronisation : {latency_synchronize:.4f} ms")
+    print(f"Gemessene durchschnittliche Latenz mit Datentransfer : {latency_datatransfer:.4f} ms")
     print(f"Gesamtzeit: {end_time-start_time:.4f} s")
     num_batches = int(10000/batch_size)
-    throughput_batches = num_batches/(end_time-start_time)  # ungenau wegen 10000/batchsize!!!
+    print("num_batches", num_batches)
+    throughput_batches = num_batches/(end_time-start_time) 
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
     throughput_images = (num_batches*batch_size)/(end_time-start_time)
-    print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde") # in Log datei speichern
-
+    print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
+    latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
+    latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": latency_synchronize}
+    latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": latency_datatransfer}
     throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
     throughput_log.append(throughput)
+    latency_log.extend([latency_inteference, latency_synchronize, latency_datatransfer])
+    # latency_log.append(latency_synchronize)
+    # latency_log.append(latency_datatransfer)
 
-output_file = "throughput_results.json"
-output_file_2 = "throughput_results_2.json"
-with open(output_file, "w") as f:
-    json.dump(throughput_log, f, indent=4)
-with open(output_file_2, "w") as f:
-    json.dump(throughput_log, f, indent=4)
+
+save_json(throughput_log, "throughput_results.json")
+save_json(throughput_log, "throughput_results_2.json")
+save_json(latency_log, "latency_results.json")
