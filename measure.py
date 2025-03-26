@@ -91,128 +91,175 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
 
     return average_latency, average_latency_synchronize, average_latency_datatransfer
 
-
-
-batch_size = 1
-logger = trt.Logger(trt.Logger.WARNING)
-builder = trt.Builder(logger)
-network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
-parser = trt.OnnxParser(network, logger)
-
-success = parser.parse_from_file("mnist_model.onnx")    # parser defines the network
-for idx in range(parser.num_errors):
-    print(parser.get_error(idx))
-if not success:
-    print("no success")
-    pass # Error handling code here
-
-config = builder.create_builder_config()
-config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 20) # 1 MiB
-serialized_engine = builder.build_serialized_network(network, config) # Error Code 9: API Usage Error (Target GPU SM 61 is not supported by this TensorRT release.)
-runtime = trt.Runtime(logger)
-engine = runtime.deserialize_cuda_engine(serialized_engine)
-
-with open("mnist_model.onnx", "rb") as f:
-    model_data = f.read()
-
-#test data
-input_name = "xb"
-output_name = "linear_1"
-input_shape = (batch_size, 1, 28, 28)  
-output_shape = (batch_size, 10)
-input_size = trt.volume(input_shape) * trt.float32.itemsize  # Größe in Bytes
-output_size = trt.volume(output_shape) * trt.float32.itemsize  # Größe in Bytes
-
-test_data = torch.load("test_data.pt", map_location="cpu",weights_only=False) 
-test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), "cpu")  # test_loader in die cpu laden, wegen numpy im evaluate_model
-
-
-#inteference
-context = engine.create_execution_context()
-
-# input/output buffers
-device_input = torch.empty(input_shape, dtype=torch.float32, device='cuda')  # Eingabe auf der GPU
-device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')  # Ausgabe auf der GPU
-
-torch_stream = torch.cuda.Stream()
-stream_ptr = torch_stream.cuda_stream
-
-context.set_tensor_address(input_name, device_input.data_ptr()) 
-context.set_tensor_address(output_name, device_output.data_ptr())  # AusgabeTensor verknüpfen
-
-# inteference
-
-total_predictions = 0
-correct_predictions = 0
-iterations = 0
-iterations_max = int(10000/batch_size)
-for images, labels in test_loader:
-    images = images.float()
-    # image = images[0].squeeze()
-    # plt.imsave("output_image.png", image.numpy(), cmap='gray' if image.ndimension() == 2 else None)
-    device_input.copy_(images)
-    #inteferenz
-    with torch.cuda.stream(torch_stream):
-        context.execute_async_v3(stream_ptr)  # Richtiger Aufruf der Methode
-        torch_stream.synchronize()  # Warten, bis die GPU die Inferenz abgeschlossen hat
-    output = device_output.cpu().numpy()
-    correct, total = accuracy(labels, output)
-    total_predictions = total + total_predictions
-    correct_predictions = correct + correct_predictions
-    iterations = iterations+1
-    if iterations == iterations_max:
-        break 
-
-print("Correct Predictions: ",correct_predictions)
-print("Total Predictions: ",total_predictions)
-print("Accuracy: ", float(correct_predictions)/float(total_predictions))
-
-#print(f"Inferenz-Ergebnis (Shape {host_output.shape}):\n{output}")
-
-np.savetxt("tensorrt_inteference.txt", output)
-
-throughput_log = []
-latency_log = []
-
-for batch_size in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 
- 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 
- 3584, 4096]:
-    #Latency:
+def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images):
     print("For Batch Size: ", batch_size)
-    start_time = time.time()
-    latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
-        context=context,
-        test_loader=test_loader,
-        device_input=device_input,
-        device_output=device_output,
-        stream_ptr=stream_ptr,
-        torch_stream=torch_stream,
-        batch_size=batch_size
-    )
-    end_time = time.time()
     print(f"Gemessene durchschnittliche Latenz für Inteferenz : {latency_ms:.4f} ms")
     print(f"Gemessene durchschnittliche Latenz mit Synchronisation : {latency_synchronize:.4f} ms")
     print(f"Gemessene durchschnittliche Latenz mit Datentransfer : {latency_datatransfer:.4f} ms")
     print(f"Gesamtzeit: {end_time-start_time:.4f} s")
-    num_batches = int(10000/batch_size)
     print("num_batches", num_batches)
-    throughput_batches = num_batches/(end_time-start_time) 
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
-    throughput_images = (num_batches*batch_size)/(end_time-start_time)
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
-    log_latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
-    log_latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": (latency_synchronize-latency_ms)}
-    log_latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": (latency_datatransfer-latency_synchronize)}
-    throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
-    throughput_log.append(throughput)
-    latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
+
+def build_tensorrt_engine(onnx_model_path):
+    """
+    Erstellt und gibt die TensorRT-Engine und den Kontext zurück.
+    :param onnx_model_path: Pfad zur ONNX-Modell-Datei.
+    :param logger: TensorRT-Logger.
+    :return: TensorRT-Engine und Execution Context.
+    """
+
+    logger = trt.Logger(trt.Logger.WARNING)
+    builder = trt.Builder(logger)
+    network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
+    parser = trt.OnnxParser(network, logger)
+
+    success = parser.parse_from_file(onnx_model_path)
+    if not success:
+        for idx in range(parser.num_errors):
+            print(parser.get_error(idx))
+        raise RuntimeError(f"Fehler beim Parsen von {onnx_model_path}")
+
+    config = builder.create_builder_config()
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 20)  # 1 MiB
+
+    serialized_engine = builder.build_serialized_network(network, config)
+    runtime = trt.Runtime(logger)
+    engine = runtime.deserialize_cuda_engine(serialized_engine)
+    context = engine.create_execution_context()
+
+    return engine, context
 
 
-save_json(throughput_log, "throughput_results.json")
-save_json(throughput_log, "throughput_results_2.json")
-save_json(latency_log, "latency_results.json")
+def create_test_dataloader(data_path, batch_size):
+    """
+    Erstellt den DataLoader für die Testdaten.
+    :param data_path: Pfad zur Testdaten-Datei.
+    :param batch_size: Die Batchgröße.
+    :param device: Zielgerät (z. B. 'cpu' oder 'cuda').
+    :return: DataLoader-Objekt für die Testdaten.
+    """
+    test_data = torch.load(data_path, map_location="cpu", weights_only=False) 
+    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), "cpu")  # test_loader in die cpu laden, wegen numpy im evaluate_model
+    return test_loader
+
+def run_inference(
+        context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size):
+    """
+    Führt die Inferenz durch und misst die Genauigkeit.
+    :param context: TensorRT-Execution-Context.
+    :param test_loader: DataLoader mit Testdaten.
+    :param device_input: Eingabebuffer auf der GPU.
+    :param device_output: Ausgabebuffer auf der GPU.
+    :param stream_ptr: CUDA-Stream-Pointer.
+    :param torch_stream: PyTorch CUDA-Stream.
+    :param max_iterations: Maximalanzahl der Iterationen.
+    :return: (Anzahl der korrekten Vorhersagen, Gesamtanzahl der Vorhersagen).
+    """
+    iterations_max=int(10000/batch_size)
+    total_predictions = 0
+    correct_predictions = 0
+
+    for idx, (images, labels) in enumerate(test_loader):
+        if idx == iterations_max: 
+            break  # Begrenzung der Iterationen
+
+        images = images.float()
+        device_input.copy_(images)
+        
+        with torch.cuda.stream(torch_stream):
+            context.execute_async_v3(stream_ptr)
+            torch_stream.synchronize()
+        
+        output = device_output.cpu().numpy()
+        correct, total = accuracy(labels, output)
+        total_predictions += total
+        correct_predictions += correct
+
+    np.savetxt("tensorrt_inteference.txt", output)
+
+    return correct_predictions, total_predictions
+
+def calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes):
+    """
+    Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
+    :param context: TensorRT-Execution-Context.
+    :param test_loader: DataLoader mit Testdaten.
+    :param device_input: Eingabebuffer auf der GPU.
+    :param device_output: Ausgabebuffer auf der GPU.
+    :param stream_ptr: CUDA-Stream-Pointer.
+    :param torch_stream: PyTorch CUDA-Stream.
+    :param batch_sizes: Liste der Batchgrößen.
+    :return: (Throughput-Log, Latenz-Log).
+    """
+    throughput_log = []
+    latency_log = []
+
+    for batch_size in batch_sizes:
+        start_time = time.time()
+        latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
+            context=context,
+            test_loader=test_loader,
+            device_input=device_input,
+            device_output=device_output,
+            stream_ptr=stream_ptr,
+            torch_stream=torch_stream,
+            batch_size=batch_size
+        )
+        end_time = time.time()
+
+        num_batches = int(10000 / batch_size)
+        throughput_batches = num_batches / (end_time - start_time)
+        throughput_images = (num_batches * batch_size) / (end_time - start_time)
+
+        log_latency_inference = {"batch_size": batch_size, "type": "inference", "value": latency_ms}
+        log_latency_synchronize = {"batch_size": batch_size, "type": "synchronize", "value": (latency_synchronize - latency_ms)}
+        log_latency_datatransfer = {"batch_size": batch_size, "type": "datatransfer", "value": (latency_datatransfer - latency_synchronize)}
+        
+        throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
+        
+        throughput_log.append(throughput)
+        latency_log.extend([log_latency_inference, log_latency_synchronize, log_latency_datatransfer])
+        print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images)
+
+    return throughput_log, latency_log
+
+def test_data():
+    input_name = "xb"
+    output_name = "linear_1"
+    input_shape = (batch_size, 1, 28, 28)  
+    output_shape = (batch_size, 10)
+    device_input = torch.empty(input_shape, dtype=torch.float32, device='cuda')  # Eingabe auf der GPU
+    device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')  # Ausgabe auf der GPU
+    torch_stream = torch.cuda.Stream()
+    stream_ptr = torch_stream.cuda_stream
+    context.set_tensor_address(input_name, device_input.data_ptr()) 
+    context.set_tensor_address(output_name, device_output.data_ptr())  # AusgabeTensor verknüpfen
+    return device_input, device_output, stream_ptr, torch_stream
+
+if __name__ == "__main__":
+    onnx_model_path="mnist_model.onnx"
+    data_path = "test_data.pt"
+    batch_size = 1
+
+    engine, context = build_tensorrt_engine(onnx_model_path)
+
+    test_loader = create_test_dataloader(data_path, batch_size)
+
+    device_input, device_output, stream_ptr, torch_stream = test_data()
+
+    correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
+    print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
+
+
+    batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584, 4096]
+    throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
+    
+    profile = onnx_tool.model_profile(onnx_model_path, None, None)
+
+    save_json(throughput_log, "throughput_results.json")
+    save_json(throughput_log, "throughput_results_2.json")
+    save_json(latency_log, "latency_results.json")
 
 
 
-modelpath = 'mnist_model.onnx'
-onnx_tool.model_profile(modelpath, None, None) #pass file name
