@@ -207,19 +207,15 @@ def calculate_latency_and_throughput(context, test_loader, device_input, device_
             batch_size=batch_size
         )
         end_time = time.time()
-
-        num_batches = int(10000 / batch_size)
-        throughput_batches = num_batches / (end_time - start_time)
-        throughput_images = (num_batches * batch_size) / (end_time - start_time)
-
-        log_latency_inference = {"batch_size": batch_size, "type": "inference", "value": latency_ms}
-        log_latency_synchronize = {"batch_size": batch_size, "type": "synchronize", "value": (latency_synchronize - latency_ms)}
-        log_latency_datatransfer = {"batch_size": batch_size, "type": "datatransfer", "value": (latency_datatransfer - latency_synchronize)}
-        
+        num_batches = int(10000/batch_size)
+        throughput_batches = num_batches/(end_time-start_time) 
+        throughput_images = (num_batches*batch_size)/(end_time-start_time)
+        log_latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
+        log_latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": (latency_synchronize-latency_ms)}
+        log_latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": (latency_datatransfer-latency_synchronize)}
         throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
-        
         throughput_log.append(throughput)
-        latency_log.extend([log_latency_inference, log_latency_synchronize, log_latency_datatransfer])
+        latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
         print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images)
 
     return throughput_log, latency_log
@@ -254,7 +250,7 @@ if __name__ == "__main__":
 
     batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584, 4096]
     throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
-    
+
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
 
     save_json(throughput_log, "throughput_results.json")
