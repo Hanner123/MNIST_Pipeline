@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import json
+import onnx_tool
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -90,12 +91,6 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
 
     return average_latency, average_latency_synchronize, average_latency_datatransfer
 
-def test():
-    start_time = time.time()
-    time.sleep(0.1)  # Pause für eine Sekunde
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Verstrichene Zeit: {elapsed_time} Sekunden")
 
 
 batch_size = 1
@@ -216,3 +211,8 @@ for batch_size in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 
 save_json(throughput_log, "throughput_results.json")
 save_json(throughput_log, "throughput_results_2.json")
 save_json(latency_log, "latency_results.json")
+
+
+
+modelpath = 'mnist_model.onnx'
+onnx_tool.model_profile(modelpath, None, None) #pass file name
