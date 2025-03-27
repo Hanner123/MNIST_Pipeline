@@ -2,10 +2,15 @@ import tensorrt as trt
 import torch
 from torch.utils.data.dataloader import DataLoader
 import numpy as np
-import matplotlib.pyplot as plt
 import time
 import json
 import onnx_tool
+import torch
+import psutil
+import gc
+from pyJoules.energy_meter import measure_energy
+from pyJoules.device.rapl_device import RaplPackageDomain
+from pyJoules.device.nvidia_device import NvidiaGPUDomain
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -131,7 +136,7 @@ def build_tensorrt_engine(onnx_model_path):
     return engine, context
 
 
-def create_test_dataloader(data_path, batch_size):
+def create_test_dataloader(data_path, batch_size, device):
     """
     Erstellt den DataLoader für die Testdaten.
     :param data_path: Pfad zur Testdaten-Datei.
@@ -139,8 +144,8 @@ def create_test_dataloader(data_path, batch_size):
     :param device: Zielgerät (z. B. 'cpu' oder 'cuda').
     :return: DataLoader-Objekt für die Testdaten.
     """
-    test_data = torch.load(data_path, map_location="cpu", weights_only=False) 
-    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), "cpu")  # test_loader in die cpu laden, wegen numpy im evaluate_model
+    test_data = torch.load(data_path, map_location=device, weights_only=False) 
+    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
     return test_loader
 
 def run_inference(
@@ -233,6 +238,87 @@ def test_data():
     context.set_tensor_address(output_name, device_output.data_ptr())  # AusgabeTensor verknüpfen
     return device_input, device_output, stream_ptr, torch_stream
 
+def measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream):
+
+    # nvidia-smi -l 1
+    memory_log = []
+
+    for batch_size in batch_sizes:
+        gc.collect()
+        torch.cuda.empty_cache()  # GPU-Speicher freigeben
+        time.sleep(1)  # Stabilitätspause
+
+        torch.cuda.synchronize()  # GPU-Synchronisation
+        start_vram = torch.cuda.memory_allocated(device='cuda')
+        start_sys_vram = torch.cuda.max_memory_allocated(device='cuda')  # Maximaler GPU-Speicher
+        start_ram = psutil.virtual_memory().used / (1024 ** 2)  # RAM vorher in MB
+
+        # Führe Inferenz durch
+        for images, _ in test_loader:
+            images = images.float().to('cuda')  # Daten auf die GPU verschieben
+            if images.size(0) != batch_size:
+                continue
+            device_input.copy_(images)  # In den GPU-Input-Speicher kopieren
+
+            with torch.cuda.stream(torch_stream):
+                context.execute_async_v3(stream_ptr)
+            torch.cuda.synchronize()  # Synchronisiere GPU, um abgeschlossene Operationen sicherzustellen
+            break  # Nur ein Batch ablaufen
+
+
+        # Speicherverbrauch nach Inferenz
+        end_vram = torch.cuda.memory_allocated(device='cuda')
+        end_sys_vram = torch.cuda.max_memory_allocated(device='cuda')
+        end_ram = psutil.virtual_memory().used / (1024 ** 2)
+        # Differenz berechnen
+        vram_usage = (end_vram - start_vram) / (1024 ** 2)  # in MB
+        sys_vram_usage = (end_sys_vram - start_sys_vram) / (1024 ** 2)  # Maximaler GPU-Speicher
+        ram_usage = end_ram - start_ram  # in MB
+
+        memory_log.append({"batch_size": batch_size, "vram_usage_mb": vram_usage, "sys_vram_usage_mb": sys_vram_usage, "ram_usage_mb": ram_usage})
+        print(f"Batch Size: {batch_size}, VRAM Usage: {vram_usage:.2f} MB, Peak VRAM Usage: {sys_vram_usage:.2f} MB, RAM Usage: {ram_usage:.2f} MB")
+    print("5", images.device)
+
+    return memory_log
+
+
+
+# Energiemessung
+@measure_energy(domains=[RaplPackageDomain(0), NvidiaGPUDomain(0)])  # Messe Energieverbrauch von CPU (RAPL) und GPU (NVIDIA)
+def run_batch_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream):
+    for images, _ in test_loader:
+        images = images.float()
+        device_input.copy_(images)
+        with torch.cuda.stream(torch_stream):
+            context.execute_async_v3(stream_ptr)
+            torch_stream.synchronize()
+        device_output.cpu()
+        break  # Nur einmal messen für den Batch
+
+# Energieverbrauch messen und loggen
+def measure_energy_usage(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream):
+    energy_log = []
+
+    for batch_size in batch_sizes:
+        torch.cuda.empty_cache()
+
+        # Messen und Energieverbrauch speichern
+        energy_measurements = run_batch_inference(
+            context=context,
+            test_loader=test_loader,
+            device_input=device_input,
+            device_output=device_output,
+            stream_ptr=stream_ptr,
+            torch_stream=torch_stream
+        )
+        cpu_energy = sum([e.energy for e in energy_measurements if 'RAPL' in e.domain])
+        gpu_energy = sum([e.energy for e in energy_measurements if 'NVIDIA' in e.domain])
+
+        energy_log.append({"batch_size": batch_size, "cpu_energy_j": cpu_energy, "gpu_energy_j": gpu_energy})
+        print(f"Batch Size: {batch_size}, CPU Energy: {cpu_energy:.2f} J, GPU Energy: {gpu_energy:.2f} J")
+
+    return energy_log
+
 if __name__ == "__main__":
     onnx_model_path="mnist_model.onnx"
     data_path = "test_data.pt"
@@ -240,15 +326,15 @@ if __name__ == "__main__":
 
     engine, context = build_tensorrt_engine(onnx_model_path)
 
-    test_loader = create_test_dataloader(data_path, batch_size)
+    test_loader = create_test_dataloader(data_path, batch_size, "cpu")
 
     device_input, device_output, stream_ptr, torch_stream = test_data()
 
     correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
     print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
-
-    batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584, 4096]
+# 1, 2, 3, 4, 6, 8, 12, 16, 24, 
+    batch_sizes = [32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584, 4096]
     throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
@@ -256,6 +342,13 @@ if __name__ == "__main__":
     save_json(throughput_log, "throughput_results.json")
     save_json(throughput_log, "throughput_results_2.json")
     save_json(latency_log, "latency_results.json")
+
+    batch_sizes = [1, 64, 128]  # Beispiel-Batchgrößen
+    memory_log = measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream) #negative werte -> schwankungen, geringe auslastung
+    energy_log = measure_energy_usage(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream) #probleme mit berechtigung: mit sudo ausführen -> tensorrt fehlt
+    print(energy_log)
+
+
 
 
 
