@@ -54,10 +54,8 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
     total_time_synchronize = 0
     total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
     iterations = 0  # Anzahl gemessener Batches
-    k_max = int(10000/batch_size)
     for images, labels in test_loader:
         images = images.float()
-
  
         start_time_datatransfer = time.time()  # Startzeit messen
         device_input.copy_(images)  # Eingabe auf GPU übertragen
@@ -83,10 +81,7 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
         total_time += latency
         total_time_synchronize += latency_synchronize
         total_time_datatransfer += latency_datatransfer
-
-
         iterations += 1
-        if iterations == k_max: break
 
         # labels auswerten - zeit messen, bar plots
 
@@ -97,7 +92,7 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
 
     return average_latency, average_latency_synchronize, average_latency_datatransfer
 
-def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images):
+def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size):
     print("For Batch Size: ", batch_size)
     print(f"Gemessene durchschnittliche Latenz für Inteferenz : {latency_ms:.4f} ms")
     print(f"Gemessene durchschnittliche Latenz mit Synchronisation : {latency_synchronize:.4f} ms")
@@ -146,7 +141,9 @@ def create_test_dataloader(data_path, batch_size, device):
     :return: DataLoader-Objekt für die Testdaten.
     """
     test_data = torch.load(data_path, map_location=device, weights_only=False) 
-    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True), device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
+    Data_Loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+    test_loader = DeviceDataLoader(Data_Loader, device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
+    print(f"Batch size of testloader: {Data_Loader.batch_size}")
     return test_loader
 
 def run_inference(
@@ -180,7 +177,7 @@ def run_inference(
 
     return correct_predictions, total_predictions
 
-def calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes):
+def calculate_latency_and_throughput(context, batch_sizes):
     """
     Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
     :param context: TensorRT-Execution-Context.
@@ -192,35 +189,63 @@ def calculate_latency_and_throughput(context, test_loader, device_input, device_
     :param batch_sizes: Liste der Batchgrößen.
     :return: (Throughput-Log, Latenz-Log).
     """
+    
+
     throughput_log = []
     latency_log = []
 
     for batch_size in batch_sizes:
-        start_time = time.time()
-        latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
-            context=context,
-            test_loader=test_loader,
-            device_input=device_input,
-            device_output=device_output,
-            stream_ptr=stream_ptr,
-            torch_stream=torch_stream,
-            batch_size=batch_size
-        )
-        end_time = time.time()
+        test_loader = create_test_dataloader(data_path, batch_size, "cpu")
+        device_input, device_output, stream_ptr, torch_stream = test_data(batch_size)
+
+        
+        # Schleife für durchschnitt
+        latency_ms_sum = 0
+        latency_synchronize_sum = 0
+        lantency_datatransfer_sum = 0
+        total_time_sum = 0
+        for i in range(5):
+            start_time = time.time()
+            latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
+                context=context,
+                test_loader=test_loader,
+                device_input=device_input,
+                device_output=device_output,
+                stream_ptr=stream_ptr,
+                torch_stream=torch_stream,
+                batch_size=batch_size
+            )
+            latency_ms_sum = latency_ms_sum + latency_ms
+            latency_synchronize_sum = latency_synchronize_sum + (latency_synchronize-latency_ms)
+            lantency_datatransfer_sum = lantency_datatransfer_sum + (latency_datatransfer-latency_synchronize)
+
+            end_time = time.time()
+            total_time_sum = total_time_sum + (end_time-start_time)
+
+        latency_avg = float(latency_ms_sum/5.0)
+        latency_synchronize_avg = float(latency_synchronize_sum/5.0)
+        latency_datatransfer_avg = float(lantency_datatransfer_sum/5.0)
+        total_time_avg = float(total_time_sum/5.0)
+
         num_batches = int(10000/batch_size)
-        throughput_batches = num_batches/(end_time-start_time) 
-        throughput_images = (num_batches*batch_size)/(end_time-start_time)
-        log_latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_ms}
-        log_latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": (latency_synchronize-latency_ms)}
-        log_latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": (latency_datatransfer-latency_synchronize)}
+        throughput_batches = num_batches/(total_time_avg) 
+        throughput_images = (num_batches*batch_size)/(total_time_avg)
+
+
+        log_latency_inteference = {"batch_size": batch_size, "type":"inteference", "value": latency_avg}
+        log_latency_synchronize = {"batch_size": batch_size, "type":"synchronize", "value": (latency_synchronize_avg)}
+        log_latency_datatransfer = {"batch_size": batch_size, "type":"datatransfer", "value": (latency_datatransfer_avg)}
         throughput = {"batch_size": batch_size, "throughput_images_per_s": throughput_images, "throughput_batches_per_s": throughput_batches}
+
+
         throughput_log.append(throughput)
         latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
-        print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images)
+        print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
+        print_latency(latency_avg, latency_synchronize_avg+latency_avg, latency_datatransfer_avg+latency_synchronize_avg+latency_avg, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
 
     return throughput_log, latency_log
 
-def test_data():
+def test_data(batch_size):
     input_name = "xb"
     output_name = "linear_1"
     input_shape = (batch_size, 1, 28, 28)  
@@ -312,15 +337,15 @@ if __name__ == "__main__":
 
     test_loader = create_test_dataloader(data_path, batch_size, "cpu")
 
-    device_input, device_output, stream_ptr, torch_stream = test_data()
+    device_input, device_output, stream_ptr, torch_stream = test_data(batch_size)
 
-    # correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
-    # print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
+    correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
+    print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
-    batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1460, 1536, 1600, 1792, 2048, 2560, 3072, 3584, 4096]
-    batch_sizes = list(range(1, 4096 + 1, 10))
-    # schleife mit durchschnittswerten bilden
-    throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
+    batch_sizes = list(range(1, 256 + 1, 5))
+
+
+    throughput_log, latency_log = calculate_latency_and_throughput(context, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
 
@@ -328,17 +353,21 @@ if __name__ == "__main__":
     save_json(throughput_log, "throughput_results_2.json")
     save_json(latency_log, "latency_results.json")
 
-    batch_sizes = [1, 64, 128]  # Beispiel-Batchgrößen
-    memory_log = measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream) #negative werte -> schwankungen, geringe auslastung
+    # batch_sizes = [1, 64, 128]  # Beispiel-Batchgrößen
+    # memory_log = measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream) #negative werte -> schwankungen, geringe auslastung
     # run_inference_with_energy_measurements() #probleme mit berechtigung: mit sudo ausführen -> tensorrt fehlt
     # sudo /home/student/git/Simple_NN_Tests/venv/bin/python measure.py
     #`nvmlDeviceGetTotalEnergyConsumption` ist nicht unterstützt: Die Funktion `nvmlDeviceGetTotalEnergyConsumption()` wurde in neueren NVIDIA-Treibern und GPUs hinzugefügt. Deine aktuelle Kombination aus GPU (GTX 1050 Ti) und NVIDIA-Treiber unterstützt diese Funktion möglicherweise nicht.
     #nvidia-smi --query-gpu=power.draw --format=csv power.draw [W] [N/A]
     # Die Ausgabe `power.draw [W] [N/A]` bedeutet, dass deine GPU (GTX 1050 Ti) oder der verwendete NVIDIA-Treiber keine Leistungswerte in Watt (`power.draw`) bereitstellen kann. Dies ist leider bei einigen Consumer-GPUs wie der GTX-1050-Ti ein bekanntes Problem. 
 
+#Heute:
+# komische Peaks untersuchen -> Code korrigiert, immer noch komische Peaks aber weniger stark - Durchschnittsschleife
 
-# komische Peaks untersuchen
 # Funktion schreiben: Speicher mit parametern des Modells berechnen, mit nvidia-smi überprüfen
+
+
+
 # Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial,, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
 # Beispiel: https://github.com/iksnagreb/radioml-transformer/blob/master/model.py
 
