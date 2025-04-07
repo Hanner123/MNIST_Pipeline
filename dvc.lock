@@ -91,8 +91,8 @@ stages:
       size: 582
     - path: measure.py
       hash: md5
-      md5: b8ebb9f690992f747b0a81d8a8a076fc
-      size: 14916
+      md5: 55d34ebdbba21d7e1fcaae003bfcb177
+      size: 15294
     - path: mnist_model.onnx
       hash: md5
       md5: fedb3325c08b325d3eb345ff164a4838
@@ -107,13 +107,13 @@ stages:
     outs:
     - path: latency_results.json
       hash: md5
-      md5: fac55d9d8895d43244c96770d2c5fef9
-      size: 11741
+      md5: fbffd2dfc6e57d6b1d52ef77e56834ea
+      size: 134772
     - path: throughput_results.json
       hash: md5
-      md5: 6cd2cde415ea5c5e5bf7a56acd2db151
-      size: 5359
+      md5: b1146a8e7fd6bc55cb0f835ae11c9ba4
+      size: 61281
     - path: throughput_results_2.json
       hash: md5
-      md5: 6cd2cde415ea5c5e5bf7a56acd2db151
-      size: 5359
+      md5: b1146a8e7fd6bc55cb0f835ae11c9ba4
+      size: 61281

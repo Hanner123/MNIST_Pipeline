@@ -146,7 +146,7 @@ def create_test_dataloader(data_path, batch_size, device):
     :return: DataLoader-Objekt für die Testdaten.
     """
     test_data = torch.load(data_path, map_location=device, weights_only=False) 
-    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True), device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
+    test_loader = DeviceDataLoader(DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True), device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
     return test_loader
 
 def run_inference(
@@ -318,6 +318,8 @@ if __name__ == "__main__":
     # print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
     batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1460, 1536, 1600, 1792, 2048, 2560, 3072, 3584, 4096]
+    batch_sizes = list(range(1, 4096 + 1, 10))
+    # schleife mit durchschnittswerten bilden
     throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
@@ -335,9 +337,9 @@ if __name__ == "__main__":
     # Die Ausgabe `power.draw [W] [N/A]` bedeutet, dass deine GPU (GTX 1050 Ti) oder der verwendete NVIDIA-Treiber keine Leistungswerte in Watt (`power.draw`) bereitstellen kann. Dies ist leider bei einigen Consumer-GPUs wie der GTX-1050-Ti ein bekanntes Problem. 
 
 
-
+# komische Peaks untersuchen
 # Funktion schreiben: Speicher mit parametern des Modells berechnen, mit nvidia-smi überprüfen
-
-
+# Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial,, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
+# Beispiel: https://github.com/iksnagreb/radioml-transformer/blob/master/model.py
 
 
