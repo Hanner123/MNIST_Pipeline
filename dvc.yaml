@@ -47,8 +47,8 @@ stages:
       - bar_3.json
     params:
       - train.batch_size
-    outs:
-      - tensorrt_inteference.txt
+    # outs:
+    #   - tensorrt_inteference.txt
     plots:
      -  throughput_results.json:
          template: bar_2.json

@@ -244,7 +244,8 @@ def measure_memory(batch_sizes, context, test_loader, device_input, device_outpu
         time.sleep(1)  # Stabilitätspause
 
         torch.cuda.synchronize()  # GPU-Synchronisation
-        start_vram = torch.cuda.memory_allocated(device='cuda')
+        start_vram = torch.cuda.memory_allocated(device='cuda') #nur torch?
+
         start_sys_vram = torch.cuda.max_memory_allocated(device='cuda')  # Maximaler GPU-Speicher
         start_ram = psutil.virtual_memory().used / (1024 ** 2)  # RAM vorher in MB
 
@@ -313,10 +314,10 @@ if __name__ == "__main__":
 
     device_input, device_output, stream_ptr, torch_stream = test_data()
 
-    correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
-    print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
+    # correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
+    # print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
-    batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1536, 1792, 2048, 2560, 3072, 3584, 4096]
+    batch_sizes = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 606, 700, 750, 800, 850, 900, 950, 1024, 1280, 1460, 1536, 1600, 1792, 2048, 2560, 3072, 3584, 4096]
     throughput_log, latency_log = calculate_latency_and_throughput(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
@@ -334,6 +335,8 @@ if __name__ == "__main__":
     # Die Ausgabe `power.draw [W] [N/A]` bedeutet, dass deine GPU (GTX 1050 Ti) oder der verwendete NVIDIA-Treiber keine Leistungswerte in Watt (`power.draw`) bereitstellen kann. Dies ist leider bei einigen Consumer-GPUs wie der GTX-1050-Ti ein bekanntes Problem. 
 
 
+
+# Funktion schreiben: Speicher mit parametern des Modells berechnen, mit nvidia-smi überprüfen
 
 
 
