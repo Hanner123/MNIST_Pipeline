@@ -5,8 +5,8 @@ stages:
     deps:
     - path: train.py
       hash: md5
-      md5: 16d52085ca3e25abd770db56e6de1569
-      size: 7170
+      md5: 0cd17711aafb8da9643bbaf125e040f6
+      size: 7203
     params:
       params.yaml:
         train.batch_size: 64
@@ -14,7 +14,7 @@ stages:
     outs:
     - path: full_model.pth
       hash: md5
-      md5: a6a46543fd2cb26226b4e479380b4475
+      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 65c2511327e9f91044d3d20eeeab9d04
-      size: 1837
+      md5: 343cd9140f5c1ee9c9ba204d9a6e5472
+      size: 1929
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5782
     - path: full_model.pth
       hash: md5
-      md5: a6a46543fd2cb26226b4e479380b4475
+      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -45,16 +45,16 @@ stages:
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: 89ba1285a6512b9e69969d675109e6f7
-      size: 295
+      md5: 3b627f489905481e9b81e92ba8eeec42
+      size: 298
     - path: loss.png
       hash: md5
-      md5: 24c4ace279c387a14c68a3c579dbc0be
-      size: 31736
+      md5: a27d1d9875e88f32dea59ee2247943a6
+      size: 27626
     - path: metrics.json
       hash: md5
-      md5: 9c11437bea0f65ce32a9959d88d53575
-      size: 928
+      md5: 953132c9b58b2810915a8e5d10b824c7
+      size: 926
   export:
     cmd: python export_model.py
     deps:
@@ -64,7 +64,7 @@ stages:
       size: 720
     - path: full_model.pth
       hash: md5
-      md5: a6a46543fd2cb26226b4e479380b4475
+      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
       size: 104808
     params:
       params.yaml:
@@ -72,7 +72,7 @@ stages:
     outs:
     - path: mnist_model.onnx
       hash: md5
-      md5: fedb3325c08b325d3eb345ff164a4838
+      md5: 61bd32d2fd356fdead8ecd3b9c450932
       size: 107739
   measure:
     cmd: python measure.py
@@ -91,11 +91,11 @@ stages:
       size: 582
     - path: measure.py
       hash: md5
-      md5: 00749c456de20f386556a66cb5c8967c
-      size: 16266
+      md5: f1d3212ff96aafb78f085c3ac611752f
+      size: 16358
     - path: mnist_model.onnx
       hash: md5
-      md5: fedb3325c08b325d3eb345ff164a4838
+      md5: 61bd32d2fd356fdead8ecd3b9c450932
       size: 107739
     - path: test_data.pt
       hash: md5
@@ -107,17 +107,17 @@ stages:
     outs:
     - path: latency_results.json
       hash: md5
-      md5: f5c579c5964967cf4952abde94076ea9
+      md5: 04549f4dd20d4a1c6102b62bcf6e3b94
       size: 16905
     - path: tensorrt_inteference.txt
       hash: md5
-      md5: e5aa84f6526a3b3d9f01d03c9bff08f8
+      md5: d49414da3e1c2814bfdd4a385ba4b4ac
       size: 256
     - path: throughput_results.json
       hash: md5
-      md5: 83f45e81f05d09ab69a823daff5f0d62
-      size: 7733
+      md5: 30ca08a3f843dd1c05acf67461abbab1
+      size: 7730
     - path: throughput_results_2.json
       hash: md5
-      md5: 83f45e81f05d09ab69a823daff5f0d62
-      size: 7733
+      md5: 30ca08a3f843dd1c05acf67461abbab1
+      size: 7730

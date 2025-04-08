@@ -8,11 +8,8 @@ import onnx_tool
 import torch
 import psutil
 import gc
-from pyJoules.energy_meter import measure_energy
-from pyJoules.device.rapl_device import RaplPackageDomain
-from pyJoules.device.nvidia_device import NvidiaGPUDomain
 import pynvml
-import onnx
+import sys
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -32,7 +29,6 @@ class DeviceDataLoader():
         return len(self.dl)
 
 def accuracy(labels, outputs):
-    # funktioniert nicht mit größerer batch size
     correct_predictions = 0
     total_predictions = 0
     i = 0
@@ -42,6 +38,7 @@ def accuracy(labels, outputs):
         if predicted == label:
             correct_predictions = correct_predictions + 1
         i = i+1
+    print("acc", correct_predictions/total_predictions)
     return correct_predictions, total_predictions
 
 def save_json(log, filepath):
@@ -50,47 +47,56 @@ def save_json(log, filepath):
 
 def measure_latency(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size=1):
     """
-    Funktion zur Bestimmung der Inferenzlatenz.
+    Messung der Latenz und optionale GPU-Speicherauslastung während der Inferenz.
     """
+    import os  # Für nvidia-smi-Befehl
     total_time = 0
     total_time_synchronize = 0
-    total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
-    iterations = 0  # Anzahl gemessener Batches
+    total_time_datatransfer = 0
+    iterations = 0
+
     for images, labels in test_loader:
         images = images.float()
- 
-        start_time_datatransfer = time.time()  # Startzeit messen
-        device_input.copy_(images)  # Eingabe auf GPU übertragen
 
-        start_time_synchronize = time.time()  # Startzeit messen
-        torch_stream.synchronize()  
+        # Vor dem Daten-Transfer (Baseline speichern)
+        os.system("nvidia-smi")  # Zeigt aktuellen CUDA-Speicherverbrauch
 
-        start_time_inteference = time.time()  # Startzeit messen
+        start_time_datatransfer = time.time()
+        device_input.copy_(images)  # Übertrage Eingabe auf GPU
 
+        # Nach dem Kopieren auf die GPU
+        print("Nach Datenübertragung auf GPU:")
+        os.system("nvidia-smi")
+
+        start_time_synchronize = time.time()
+        torch_stream.synchronize()
+
+        start_time_inference = time.time()
         with torch.cuda.stream(torch_stream):
-            context.execute_async_v3(stream_ptr)  # TensorRT-Inferenz durchführen
-        torch_stream.synchronize()  # GPU-Synchronisation nach Inferenz
+            context.execute_async_v3(stream_ptr)  # TensorRT-Inferenz
 
+        # Nach der eigentlichen Inferenz
+        print("Nach Model Inference:")
+        os.system("nvidia-smi")
+
+        torch_stream.synchronize()
         end_time = time.time()
 
         output = device_output.cpu().numpy()
-        end_time_datatransfer = time.time() 
+        end_time_datatransfer = time.time()
 
-        latency = end_time - start_time_inteference  # Latenz für diesen Batch
-        latency_synchronize = end_time - start_time_synchronize  # Latenz für diesen Batch
-        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  # Latenz für diesen Batch
+        latency = end_time - start_time_inference
+        latency_synchronize = end_time - start_time_synchronize
+        latency_datatransfer = end_time_datatransfer - start_time_datatransfer
 
         total_time += latency
         total_time_synchronize += latency_synchronize
         total_time_datatransfer += latency_datatransfer
         iterations += 1
 
-        # labels auswerten - zeit messen, bar plots
-
-    average_latency = (total_time / iterations) * 1000  # In Millisekunden
-    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
-    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
-
+    average_latency = (total_time / iterations) * 1000
+    average_latency_synchronize = (total_time_synchronize / iterations) * 1000
+    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000
 
     return average_latency, average_latency_synchronize, average_latency_datatransfer
 
@@ -174,7 +180,6 @@ def run_inference(
         correct, total = accuracy(labels, output)
         total_predictions += total
         correct_predictions += correct
-
     np.savetxt("tensorrt_inteference.txt", output)
 
     return correct_predictions, total_predictions
@@ -206,6 +211,7 @@ def calculate_latency_and_throughput(context, batch_sizes):
         latency_synchronize_sum = 0
         lantency_datatransfer_sum = 0
         total_time_sum = 0
+        time.sleep(10)
         for i in range(5):
             start_time = time.time()
             latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
@@ -330,59 +336,15 @@ def run_inference_with_energy_measurements():
     total_energy_mwh = total_energy_joules / 3600 * 1000  # Joule in Milliwattstunden umrechnen
     print(f"Total Energy Consumption: {total_energy_mwh:.4f} mWh")
 
-if __name__ == "__main__":
-    onnx_model_path="mnist_model.onnx"
-    data_path = "test_data.pt"
-    batch_size = 1
+batch_size = int(sys.argv[1])
+onnx_model_path="mnist_model.onnx"
+data_path = "test_data.pt"
 
-    engine, context = build_tensorrt_engine(onnx_model_path)
+engine, context = build_tensorrt_engine(onnx_model_path)
 
-    test_loader = create_test_dataloader(data_path, batch_size, "cpu")
+batch_sizes = []
+batch_sizes.append(batch_size) 
+calculate_latency_and_throughput(context, batch_sizes)
 
-    device_input, device_output, stream_ptr, torch_stream = test_data(batch_size)
-
-    correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
-    print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
-
-    #batch_sizes = list(range(1, 256 + 1, 5))
-    batch_sizes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
-
-    throughput_log, latency_log = calculate_latency_and_throughput(context, batch_sizes)
-
-    profile = onnx_tool.model_profile(onnx_model_path, None, None)
-    onnx_model = onnx.load("mnist_model.onnx")
-    for input_tensor in onnx_model.graph.input:
-        print(input_tensor)
-
-
-
-
-    save_json(throughput_log, "throughput_results.json")
-    save_json(throughput_log, "throughput_results_2.json")
-    save_json(latency_log, "latency_results.json")
-
-    # batch_sizes = [1, 64, 128]  # Beispiel-Batchgrößen
-    # memory_log = measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream) #negative werte -> schwankungen, geringe auslastung
-    # run_inference_with_energy_measurements() #probleme mit berechtigung: mit sudo ausführen -> tensorrt fehlt
-    # sudo /home/student/git/Simple_NN_Tests/venv/bin/python measure.py
-    #`nvmlDeviceGetTotalEnergyConsumption` ist nicht unterstützt: Die Funktion `nvmlDeviceGetTotalEnergyConsumption()` wurde in neueren NVIDIA-Treibern und GPUs hinzugefügt. Deine aktuelle Kombination aus GPU (GTX 1050 Ti) und NVIDIA-Treiber unterstützt diese Funktion möglicherweise nicht.
-    #nvidia-smi --query-gpu=power.draw --format=csv power.draw [W] [N/A]
-    # Die Ausgabe `power.draw [W] [N/A]` bedeutet, dass deine GPU (GTX 1050 Ti) oder der verwendete NVIDIA-Treiber keine Leistungswerte in Watt (`power.draw`) bereitstellen kann. Dies ist leider bei einigen Consumer-GPUs wie der GTX-1050-Ti ein bekanntes Problem. 
-
-
-# 07.04.
-# komische Peaks untersuchen -> Code korrigiert - Durchschnittsschleife
-
-# 08.04.
-# Funktion schreiben: Speicher mit parametern des Modells berechnen, mit nvidia-smi überprüfen
-# nothing.py: np array -> immer 40MiB Blöcker...
-
-# nochmal inteferenz überprüfen - an welchem punkt messen? - sind es wirklich immer 72 MiB?
-# überlegen was das bedeutet... was ist wirklich der arbeitsspeicher den der inteferenzvorgang benötigt???
-
-
-# 14.04. / 15.04.
-# Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial,, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
-# Beispiel: https://github.com/iksnagreb/radioml-transformer/blob/master/model.py
-
+    
 
