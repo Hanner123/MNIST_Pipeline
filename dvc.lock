@@ -5,16 +5,16 @@ stages:
     deps:
     - path: train.py
       hash: md5
-      md5: 0cd17711aafb8da9643bbaf125e040f6
-      size: 7203
+      md5: 24b5400540eee6172d9ae39526778380
+      size: 7202
     params:
       params.yaml:
-        train.batch_size: 64
+        train.batch_size: 256
         train.lr: 0.2
     outs:
     - path: full_model.pth
       hash: md5
-      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
+      md5: 8bed184ac9407254ce697f34ff489904
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 343cd9140f5c1ee9c9ba204d9a6e5472
-      size: 1929
+      md5: 2b705217f7c9fce2b33edf933785aea6
+      size: 445
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5782
     - path: full_model.pth
       hash: md5
-      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
+      md5: 8bed184ac9407254ce697f34ff489904
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -41,39 +41,39 @@ stages:
       size: 7921764
     params:
       params.yaml:
-        train.batch_size: 64
+        train.batch_size: 256
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: 3b627f489905481e9b81e92ba8eeec42
-      size: 298
+      md5: f83f695b4e61339fa0061a8610a18225
+      size: 311
     - path: loss.png
       hash: md5
-      md5: a27d1d9875e88f32dea59ee2247943a6
-      size: 27626
+      md5: a8c9384e82fe74e2a5f220f96a132cb7
+      size: 27220
     - path: metrics.json
       hash: md5
-      md5: 953132c9b58b2810915a8e5d10b824c7
+      md5: a99f2f37ca7207e343040b8e587cc0f6
       size: 926
   export:
     cmd: python export_model.py
     deps:
     - path: export_model.py
       hash: md5
-      md5: aff4e312a5f54fb72e9397179117629d
-      size: 720
+      md5: 257b6fe26133d517779a692795c3a695
+      size: 956
     - path: full_model.pth
       hash: md5
-      md5: 52052c522ad4bfc3f0a2a7ec4ff5ca99
+      md5: 8bed184ac9407254ce697f34ff489904
       size: 104808
     params:
       params.yaml:
-        train.batch_size: 64
+        train.batch_size: 256
     outs:
     - path: mnist_model.onnx
       hash: md5
-      md5: 61bd32d2fd356fdead8ecd3b9c450932
-      size: 107739
+      md5: 74dc0baf78dffbf8ec3adaa29d6a9818
+      size: 107747
   measure:
     cmd: python measure.py
     deps:
@@ -91,33 +91,33 @@ stages:
       size: 582
     - path: measure.py
       hash: md5
-      md5: f1d3212ff96aafb78f085c3ac611752f
-      size: 16358
+      md5: f0b5ed68b780f851a33acfeda7659312
+      size: 15370
     - path: mnist_model.onnx
       hash: md5
-      md5: 61bd32d2fd356fdead8ecd3b9c450932
-      size: 107739
+      md5: 74dc0baf78dffbf8ec3adaa29d6a9818
+      size: 107747
     - path: test_data.pt
       hash: md5
       md5: 85ba9721e8544873a4c67cc49a237d99
       size: 7921764
     params:
       params.yaml:
-        train.batch_size: 64
+        train.batch_size: 256
     outs:
     - path: latency_results.json
       hash: md5
-      md5: 04549f4dd20d4a1c6102b62bcf6e3b94
-      size: 16905
+      md5: 6549b0d7a003d418a2697b79bedd6bb9
+      size: 2913
     - path: tensorrt_inteference.txt
       hash: md5
-      md5: d49414da3e1c2814bfdd4a385ba4b4ac
-      size: 256
+      md5: 06de684255bb11793e102dc3a24aa6d9
+      size: 32645
     - path: throughput_results.json
       hash: md5
-      md5: 30ca08a3f843dd1c05acf67461abbab1
-      size: 7730
+      md5: 81dbbaf747f63cf4ba1bb2b04d579bbe
+      size: 1331
     - path: throughput_results_2.json
       hash: md5
-      md5: 30ca08a3f843dd1c05acf67461abbab1
-      size: 7730
+      md5: 81dbbaf747f63cf4ba1bb2b04d579bbe
+      size: 1331

@@ -38,6 +38,7 @@ def accuracy(labels, outputs):
     i = 0
     for label in labels:
         _, predicted = torch.max(torch.tensor(outputs[i]), dim=0)
+        print("predicted: ", predicted)
         total_predictions = total_predictions + 1
         if predicted == label:
             correct_predictions = correct_predictions + 1
@@ -166,11 +167,12 @@ def run_inference(
         images = images.float()
         device_input.copy_(images)
         
-        with torch.cuda.stream(torch_stream):
+        with torch.cuda.stream(torch_stream): # nicht für mehr als 64 Bildern möglich
             context.execute_async_v3(stream_ptr)
             torch_stream.synchronize()
-        
+
         output = device_output.cpu().numpy()
+
         correct, total = accuracy(labels, output)
         total_predictions += total
         correct_predictions += correct
@@ -198,7 +200,7 @@ def calculate_latency_and_throughput(context, batch_sizes):
 
     for batch_size in batch_sizes:
         test_loader = create_test_dataloader(data_path, batch_size, "cpu")
-        device_input, device_output, stream_ptr, torch_stream = test_data(batch_size)
+        device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
         
         # Schleife für durchschnitt
@@ -206,7 +208,8 @@ def calculate_latency_and_throughput(context, batch_sizes):
         latency_synchronize_sum = 0
         lantency_datatransfer_sum = 0
         total_time_sum = 0
-        for i in range(5):
+        num_executions = 10.0
+        for i in range(int(num_executions)):
             start_time = time.time()
             latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
                 context=context,
@@ -224,10 +227,10 @@ def calculate_latency_and_throughput(context, batch_sizes):
             end_time = time.time()
             total_time_sum = total_time_sum + (end_time-start_time)
 
-        latency_avg = float(latency_ms_sum/5.0)
-        latency_synchronize_avg = float(latency_synchronize_sum/5.0)
-        latency_datatransfer_avg = float(lantency_datatransfer_sum/5.0)
-        total_time_avg = float(total_time_sum/5.0)
+        latency_avg = float(latency_ms_sum/num_executions)
+        latency_synchronize_avg = float(latency_synchronize_sum/num_executions)
+        latency_datatransfer_avg = float(lantency_datatransfer_sum/num_executions)
+        total_time_avg = float(total_time_sum/num_executions)
 
         num_batches = int(10000/batch_size)
         throughput_batches = num_batches/(total_time_avg) 
@@ -247,10 +250,11 @@ def calculate_latency_and_throughput(context, batch_sizes):
 
     return throughput_log, latency_log
 
-def test_data(batch_size):
+def test_data(context, batch_size):
+
     input_name = "xb"
     output_name = "linear_1"
-    input_shape = (batch_size, 1, 28, 28)  
+    input_shape = (batch_size, 1, 28, 28) #!!!! funktioniert nicht richtig, bei größeren Batch sizes als das model wird der rest nicht predicted 
     output_shape = (batch_size, 10)
     device_input = torch.empty(input_shape, dtype=torch.float32, device='cuda')  # Eingabe auf der GPU
     device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')  # Ausgabe auf der GPU
@@ -260,49 +264,6 @@ def test_data(batch_size):
     context.set_tensor_address(output_name, device_output.data_ptr())  # AusgabeTensor verknüpfen
     return device_input, device_output, stream_ptr, torch_stream
 
-def measure_memory(batch_sizes, context, test_loader, device_input, device_output, stream_ptr, torch_stream):
-
-    # nvidia-smi -l 1
-    memory_log = []
-
-    for batch_size in batch_sizes:
-        gc.collect()
-        torch.cuda.empty_cache()  # GPU-Speicher freigeben
-        time.sleep(1)  # Stabilitätspause
-
-        torch.cuda.synchronize()  # GPU-Synchronisation
-        start_vram = torch.cuda.memory_allocated(device='cuda') #nur torch?
-
-        start_sys_vram = torch.cuda.max_memory_allocated(device='cuda')  # Maximaler GPU-Speicher
-        start_ram = psutil.virtual_memory().used / (1024 ** 2)  # RAM vorher in MB
-
-        # Führe Inferenz durch
-        for images, _ in test_loader:
-            images = images.float().to('cuda')  # Daten auf die GPU verschieben
-            if images.size(0) != batch_size:
-                continue
-            device_input.copy_(images)  # In den GPU-Input-Speicher kopieren
-
-            with torch.cuda.stream(torch_stream):
-                context.execute_async_v3(stream_ptr)
-            torch.cuda.synchronize()  # Synchronisiere GPU, um abgeschlossene Operationen sicherzustellen
-            break  # Nur ein Batch ablaufen
-
-
-        # Speicherverbrauch nach Inferenz
-        end_vram = torch.cuda.memory_allocated(device='cuda')
-        end_sys_vram = torch.cuda.max_memory_allocated(device='cuda')
-        end_ram = psutil.virtual_memory().used / (1024 ** 2)
-        # Differenz berechnen
-        vram_usage = (end_vram - start_vram) / (1024 ** 2)  # in MB
-        sys_vram_usage = (end_sys_vram - start_sys_vram) / (1024 ** 2)  # Maximaler GPU-Speicher
-        ram_usage = end_ram - start_ram  # in MB
-
-        memory_log.append({"batch_size": batch_size, "vram_usage_mb": vram_usage, "sys_vram_usage_mb": sys_vram_usage, "ram_usage_mb": ram_usage})
-        print(f"Batch Size: {batch_size}, VRAM Usage: {vram_usage:.2f} MB, Peak VRAM Usage: {sys_vram_usage:.2f} MB, RAM Usage: {ram_usage:.2f} MB")
-    print("5", images.device)
-
-    return memory_log
 
 
 
@@ -333,19 +294,19 @@ def run_inference_with_energy_measurements():
 if __name__ == "__main__":
     onnx_model_path="mnist_model.onnx"
     data_path = "test_data.pt"
-    batch_size = 1
+    batch_size = 128
 
     engine, context = build_tensorrt_engine(onnx_model_path)
 
     test_loader = create_test_dataloader(data_path, batch_size, "cpu")
 
-    device_input, device_output, stream_ptr, torch_stream = test_data(batch_size)
+    device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
     correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
     print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
-    #batch_sizes = list(range(1, 256 + 1, 5))
-    batch_sizes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
+    batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    # batch_sizes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
     throughput_log, latency_log = calculate_latency_and_throughput(context, batch_sizes)
 
@@ -353,9 +314,6 @@ if __name__ == "__main__":
     onnx_model = onnx.load("mnist_model.onnx")
     for input_tensor in onnx_model.graph.input:
         print(input_tensor)
-
-
-
 
     save_json(throughput_log, "throughput_results.json")
     save_json(throughput_log, "throughput_results_2.json")
@@ -375,14 +333,31 @@ if __name__ == "__main__":
 
 # 08.04.
 # Funktion schreiben: Speicher mit parametern des Modells berechnen, mit nvidia-smi überprüfen
-# nothing.py: np array -> immer 40MiB Blöcker...
-
-# nochmal inteferenz überprüfen - an welchem punkt messen? - sind es wirklich immer 72 MiB?
+# nothing.py: np array -> immer 40MiB Blöcke...
+# nochmal inteferenz überprüfen - an welchem punkt messen? - sind es wirklich immer 72 MiB? - ja!
 # überlegen was das bedeutet... was ist wirklich der arbeitsspeicher den der inteferenzvorgang benötigt???
 
 
+
+
+
+# torch tensorrt - trt_model, größere batch sizes - sinnvolles ergebnis?
+# https://pytorch.org/TensorRT/_notebooks/dynamic-shapes.html,  min_shape=(16, 3, 224, 224)
+# https://pytorch.org/TensorRT/getting_started/quick_start.html
+# aufwendige Methode: 
+
+
+
+
+
+
+
+
+
+
 # 14.04. / 15.04.
-# Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial,, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
+# Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
 # Beispiel: https://github.com/iksnagreb/radioml-transformer/blob/master/model.py
+# anderer Export, 8/16/32 Bit
 
 

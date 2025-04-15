@@ -11,7 +11,12 @@ def load_params():
 params = load_params()
 batch_size = params["train"]["batch_size"]
 
-example_inputs = torch.randn(batch_size, 1, 28, 28).float()
+example_inputs = torch.randn(batch_size, 1, 28, 28).float() # eventuell andere Batch sizes nötig/ häufiger exportieren
+
+
+# vergleich: inteferenz mit 16, 32, 64, 128 Batch size auf 128 Batch Size Model
+# vergleich: inteferenz mit 16, 32, 64, 128 Batch size auf 16, 32, 64, 128 Batch Size Model
+
 model = torch.load("full_model.pth", map_location="cpu", weights_only=False)
 
 onnx_program = torch.onnx.export(model, example_inputs, dynamo=True)

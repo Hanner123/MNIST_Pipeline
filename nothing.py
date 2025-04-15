@@ -12,13 +12,12 @@ size_in_bytes = i * (2 ** 20)  # 100 MiB
 num_values = size_in_bytes // 4  # Anzahl für float32 (4 Bytes)
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 data = torch.rand(num_values, device=device, dtype=torch.float32)
-
 # Rechenoperationen auf der GPU
 result = torch.sin(data) + torch.log(data) - torch.sqrt(data)
 sum_result = torch.sum(result)  # Summe der Ergebnisse
 print(f"Summe der Berechnungen: {sum_result}")
 
 print("Warte 3 Sekunden...", i)
-time.sleep(1)
+time.sleep(3)
 
 

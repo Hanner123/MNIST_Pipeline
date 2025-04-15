@@ -153,7 +153,7 @@ def train():
     to_device(model, device)
 
     print(evaluate(model,val_loader)) # Modell wird vor dem training evaluiert, um es vergleichen zu können (es sollte ca 10% genauigkeit ergeben)
-    number_epochs = 21
+    number_epochs = 5
     history = fit(number_epochs,learning_rate,model,train_loder,val_loader) # Modell trainieren und für epochen prints ausgeben
 
     with open("training_data.json", "w") as f:

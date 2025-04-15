@@ -1,0 +1,47 @@
+Arbeitsspeicher pro Inteferenz pro Image: 
+- 99,3 KB (Parameter)
+- 6,4KB (Aktivierungsfunktionen)
+- 3,1 KB (Inputdaten)
+
+Gemessener Arbeitsspeicher pro Inteferenzvorgang mit nvidia-smi: 72 MiB (unabhängig von der Batch size...)
+
+Bei größerer Batchgröße wird der benötigte Arbeitsspeicher größer! -> andere Batch sizes weglassen
+
+
+Arbeitsspeicher pro Lernvorgang:
+- Modellparameter (100KB)
+- Gradienten (100KB)
+- Aktivierungsfunktion & Inputdaten (9,5 KB)
+- Optimizer: SGD - kein zusätzlicher Speicher
+Gesamt: ca 200KB
+
+Speicher des Modells: 0.1MB
+Anzahl Parameter: 25450
+Datentyp der Parameter: float32
+
+Welche Operationen werden bei der Inteferenz ausgeführt?
+- input: 1 image mit 28x28 Pixeln -784 (flattening, casting)
+- fully connected Layer: eingang: 784, ausgang: 32 --> 32*784 + 32 = 25088 Parameter
+- fully connected Layer: eingang: 32, ausgang: 10 -> 10*32 + 10 = 330 Parameter
+- output: Zahl (Integer)
+
+
+
+Arbeitsspeicher beim Lernvorgang:
+Batch Size 1: steigt an (108 ... 148 MiB)
+Batch Size 64: 122 MiB
+
+
+
+Do Nothing:
+erstellt torch rand array mit xx MiB an datan: tatsächlich gemessene Daten
+
+0 MiB: 52 MiB
+30 MiB: 172 MiB
+60 MiB: 292 MiB
+90 MiB: 412 MiB
+120 MiB:  532 MiB
+150 MiB: 652 MiB
+(ca 4 mal so viel wie erwartet)
+--- feste Blöcke werden reserviert, eig. viel zu viel
+

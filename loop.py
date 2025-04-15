@@ -9,10 +9,24 @@ import torch
 
 import subprocess
 
+# # Starte ein Programm im Hintergrund#
+# list = list(range(40,200+1,30))
+# for i in list:
+#     subprocess.run(["python3", "measure_for_mem.py", str(i)])
+
+
+# for idx, speicher in enumerate(list):
+#     print("von Python reservierter speicher: 72 MiB") #immer 72...
+#     print("Batch Größe: ", list[idx])
+#     print("-" * 30)  # Trennlinie für Lesbarkeit
+
+# print("Das Skript läuft im Hintergrund...")
+
+
 # Starte ein Programm im Hintergrund#
-list = list(range(40,200+1,30))
+list = list(range(0,200+1,30))
 for i in list:
-    subprocess.run(["python3", "measure_for_mem.py", str(i)])
+    subprocess.run(["python3", "nothing.py", str(i)])
 
 
 for idx, speicher in enumerate(list):
@@ -21,6 +35,3 @@ for idx, speicher in enumerate(list):
     print("-" * 30)  # Trennlinie für Lesbarkeit
 
 print("Das Skript läuft im Hintergrund...")
-
-
-# das gleiche nochmal mit measure machen (latency für verschiedene Batch sizes)
