@@ -2,136 +2,136 @@
     {
         "batch_size": 1,
         "type": "inteference",
-        "value": 0.06390971899032594
+        "value": 0.0433312177658081
     },
     {
         "batch_size": 1,
         "type": "synchronize",
-        "value": 0.0026244544982910135
+        "value": 0.002517142295837402
     },
     {
         "batch_size": 1,
         "type": "datatransfer",
-        "value": 0.03936577081680298
+        "value": 0.038300626277923584
     },
     {
         "batch_size": 2,
         "type": "inteference",
-        "value": 0.07209203720092774
+        "value": 0.045086216926574704
     },
     {
         "batch_size": 2,
         "type": "synchronize",
-        "value": 0.0027718496322631805
+        "value": 0.0026636934280395512
     },
     {
         "batch_size": 2,
         "type": "datatransfer",
-        "value": 0.040307579040527355
+        "value": 0.03982045650482178
     },
     {
         "batch_size": 4,
         "type": "inteference",
-        "value": 0.07460848808288574
+        "value": 0.04752079010009766
     },
     {
         "batch_size": 4,
         "type": "synchronize",
-        "value": 0.0028386020660400397
+        "value": 0.0028056526184082045
     },
     {
         "batch_size": 4,
         "type": "datatransfer",
-        "value": 0.04206595420837403
+        "value": 0.041128721237182614
     },
     {
         "batch_size": 8,
         "type": "inteference",
-        "value": 0.07480522155761718
+        "value": 0.04613100051879883
     },
     {
         "batch_size": 8,
         "type": "synchronize",
-        "value": 0.002861366271972654
+        "value": 0.0027030754089355465
     },
     {
         "batch_size": 8,
         "type": "datatransfer",
-        "value": 0.042870063781738285
+        "value": 0.04075813293457031
     },
     {
         "batch_size": 16,
         "type": "inteference",
-        "value": 0.07520782470703127
+        "value": 0.047895622253417966
     },
     {
         "batch_size": 16,
         "type": "synchronize",
-        "value": 0.002884750366210935
+        "value": 0.0028016662597656248
     },
     {
         "batch_size": 16,
         "type": "datatransfer",
-        "value": 0.045485801696777343
+        "value": 0.044656715393066405
     },
     {
         "batch_size": 32,
         "type": "inteference",
-        "value": 0.07520050574571659
+        "value": 0.050283013245998286
     },
     {
         "batch_size": 32,
         "type": "synchronize",
-        "value": 0.002918793604924129
+        "value": 0.0028713391377375684
     },
     {
         "batch_size": 32,
         "type": "datatransfer",
-        "value": 0.05282408151871119
+        "value": 0.05453710372631367
     },
     {
         "batch_size": 64,
         "type": "inteference",
-        "value": 0.07654046400999412
+        "value": 0.06707799740326711
     },
     {
         "batch_size": 64,
         "type": "synchronize",
-        "value": 0.0030230253170698148
+        "value": 0.0029438581222142922
     },
     {
         "batch_size": 64,
         "type": "datatransfer",
-        "value": 0.061240104528573834
+        "value": 0.06506443023681643
     },
     {
         "batch_size": 128,
         "type": "inteference",
-        "value": 0.07701959365453477
+        "value": 0.0675060810186924
     },
     {
         "batch_size": 128,
         "type": "synchronize",
-        "value": 0.0030416708726149306
+        "value": 0.002999489124004656
     },
     {
         "batch_size": 128,
         "type": "datatransfer",
-        "value": 0.08021654226841071
+        "value": 0.0836635247254983
     },
     {
         "batch_size": 256,
         "type": "inteference",
-        "value": 0.07871725620367588
+        "value": 0.07271522130721653
     },
     {
         "batch_size": 256,
         "type": "synchronize",
-        "value": 0.0031220607268504603
+        "value": 0.003207035553761013
     },
     {
         "batch_size": 256,
         "type": "datatransfer",
-        "value": 0.11424040183042869
+        "value": 0.12056644146259017
     }
 ]

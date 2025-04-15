@@ -35,13 +35,29 @@ stages:
     params:
       - train.batch_size
     outs:
-      - mnist_model.onnx
+      - mnist_model_1.onnx
+      - mnist_model_2.onnx
+      - mnist_model_4.onnx
+      - mnist_model_8.onnx
+      - mnist_model_16.onnx
+      - mnist_model_32.onnx
+      - mnist_model_64.onnx
+      - mnist_model_128.onnx
+      - mnist_model_256.onnx
   measure:
     cmd: python measure.py
     deps:
       - test_data.pt
       - measure.py
-      - mnist_model.onnx
+      - mnist_model_1.onnx
+      - mnist_model_2.onnx
+      - mnist_model_4.onnx
+      - mnist_model_8.onnx
+      - mnist_model_16.onnx
+      - mnist_model_32.onnx
+      - mnist_model_64.onnx
+      - mnist_model_128.onnx
+      - mnist_model_256.onnx
       - bar_1.json
       - bar_2.json
       - bar_3.json

@@ -199,6 +199,8 @@ def calculate_latency_and_throughput(context, batch_sizes):
     latency_log = []
 
     for batch_size in batch_sizes:
+        onnx_model_path = "mnist_model_" + str(batch_size) + ".onnx"
+        engine, context = build_tensorrt_engine(onnx_model_path)
         test_loader = create_test_dataloader(data_path, batch_size, "cpu")
         device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
@@ -245,7 +247,7 @@ def calculate_latency_and_throughput(context, batch_sizes):
 
         throughput_log.append(throughput)
         latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
-        print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
+        # print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
         print_latency(latency_avg, latency_synchronize_avg+latency_avg, latency_datatransfer_avg+latency_synchronize_avg+latency_avg, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
 
     return throughput_log, latency_log
@@ -306,8 +308,7 @@ if __name__ == "__main__":
     print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
 
     batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
-    # batch_sizes = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-
+    context=0
     throughput_log, latency_log = calculate_latency_and_throughput(context, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
