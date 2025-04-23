@@ -5,14 +5,12 @@ __pycache__/
 
 # Virtual Environment
 .env/
-venv/
+.venv/
 data/
 /full_model.pth
 /confusion_matrix.csv
 /training_data.json
 /test_data.pt
-/cuda_12.1.1_530.30.02_linux.run
-/cudnn-local-repo-ubuntu2204-9.7.1_1.0-1_amd64.deb
 /eval
 /loss.png
 /mnist_model.onnx
@@ -27,5 +25,3 @@ data/
 /mnist_model_256.onnx
 /dvc_plots
 /tensorrt_inteference.txt
-/cuda-repo-ubuntu2204-12-1-local_12.1.0-530.30.02-1_amd64.deb
-/cuda-repo-ubuntu2204-12-1-local_12.1.0-530.30.02-1_amd64.deb.1

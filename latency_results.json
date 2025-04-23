@@ -2,136 +2,136 @@
     {
         "batch_size": 1,
         "type": "inteference",
-        "value": 0.043226675987243654
+        "value": 0.043162083625793456
     },
     {
         "batch_size": 1,
         "type": "synchronize",
-        "value": 0.0024331665039062527
+        "value": 0.0025064659118652333
     },
     {
         "batch_size": 1,
         "type": "datatransfer",
-        "value": 0.036432290077209474
+        "value": 0.03754103422164917
     },
     {
         "batch_size": 2,
         "type": "inteference",
-        "value": 0.04529014587402343
+        "value": 0.04493403434753419
     },
     {
         "batch_size": 2,
         "type": "synchronize",
-        "value": 0.002584853172302247
+        "value": 0.0026156854629516605
     },
     {
         "batch_size": 2,
         "type": "datatransfer",
-        "value": 0.037862219810485834
+        "value": 0.03865180492401123
     },
     {
         "batch_size": 4,
         "type": "inteference",
-        "value": 0.045711984634399405
+        "value": 0.04580522537231445
     },
     {
         "batch_size": 4,
         "type": "synchronize",
-        "value": 0.002628583908081056
+        "value": 0.002735176086425781
     },
     {
         "batch_size": 4,
         "type": "datatransfer",
-        "value": 0.038492259979248045
+        "value": 0.039585905075073244
     },
     {
         "batch_size": 8,
         "type": "inteference",
-        "value": 0.052750358581542964
+        "value": 0.04756343841552734
     },
     {
         "batch_size": 8,
         "type": "synchronize",
-        "value": 0.002771053314208985
+        "value": 0.0027862358093261714
     },
     {
         "batch_size": 8,
         "type": "datatransfer",
-        "value": 0.04013286590576172
+        "value": 0.040838623046875
     },
     {
         "batch_size": 16,
         "type": "inteference",
-        "value": 0.06281925201416017
+        "value": 0.04677192687988281
     },
     {
         "batch_size": 16,
         "type": "synchronize",
-        "value": 0.002964897155761717
+        "value": 0.0028121566772460935
     },
     {
         "batch_size": 16,
         "type": "datatransfer",
-        "value": 0.04574722290039063
+        "value": 0.042544097900390626
     },
     {
         "batch_size": 32,
         "type": "inteference",
-        "value": 0.06636006709856865
+        "value": 0.0473497769771478
     },
     {
         "batch_size": 32,
         "type": "synchronize",
-        "value": 0.0029641848344069263
+        "value": 0.0028993074710552506
     },
     {
         "batch_size": 32,
         "type": "datatransfer",
-        "value": 0.054003489323151424
+        "value": 0.052600487684592225
     },
     {
         "batch_size": 64,
         "type": "inteference",
-        "value": 0.09719011111137196
+        "value": 0.07142928930429313
     },
     {
         "batch_size": 64,
         "type": "synchronize",
-        "value": 0.0034520259270301194
+        "value": 0.0031391779581705762
     },
     {
         "batch_size": 64,
         "type": "datatransfer",
-        "value": 0.07042823693691155
+        "value": 0.06560698533669496
     },
     {
         "batch_size": 128,
         "type": "inteference",
-        "value": 0.11041867427336863
+        "value": 0.07016567083505484
     },
     {
         "batch_size": 128,
         "type": "synchronize",
-        "value": 0.003679899068979112
+        "value": 0.0032534966102013203
     },
     {
         "batch_size": 128,
         "type": "datatransfer",
-        "value": 0.09007667883848533
+        "value": 0.08433231940636268
     },
     {
         "batch_size": 256,
         "type": "inteference",
-        "value": 0.09717268821520683
+        "value": 0.07416651799128607
     },
     {
         "batch_size": 256,
         "type": "synchronize",
-        "value": 0.0038134746062449933
+        "value": 0.003307293622921674
     },
     {
         "batch_size": 256,
         "type": "datatransfer",
-        "value": 0.12649144881810898
+        "value": 0.12015929588904747
     }
 ]

@@ -14,7 +14,7 @@ stages:
     outs:
     - path: full_model.pth
       hash: md5
-      md5: 6e3d89e92a05952ea274ae9b5c2be032
+      md5: 5f8e435fba1705e53c494da932999cb0
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 860b9b8ae3697d945cf64c7128f9a24d
-      size: 459
+      md5: 270cb04dee78957e4544cca465aa29d3
+      size: 461
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5782
     - path: full_model.pth
       hash: md5
-      md5: 6e3d89e92a05952ea274ae9b5c2be032
+      md5: 5f8e435fba1705e53c494da932999cb0
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -45,16 +45,16 @@ stages:
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: 056a0650f40c6241bef83d75d82ac5f5
-      size: 300
+      md5: 491064b34c23a8f14894ca9add3f891a
+      size: 301
     - path: loss.png
       hash: md5
-      md5: 436d660b610db2dc2a791b767c648ab4
-      size: 24566
+      md5: 569c3c7be2408a5606b3eab4ca0a3efa
+      size: 21727
     - path: metrics.json
       hash: md5
-      md5: e950da5637cc64beb450bb025564499a
-      size: 931
+      md5: cca498ff196eac1748e0a565043c4d82
+      size: 932
   export:
     cmd: python export_model.py
     deps:
@@ -64,7 +64,7 @@ stages:
       size: 1134
     - path: full_model.pth
       hash: md5
-      md5: 6e3d89e92a05952ea274ae9b5c2be032
+      md5: 5f8e435fba1705e53c494da932999cb0
       size: 104808
     params:
       params.yaml:
@@ -72,40 +72,40 @@ stages:
     outs:
     - path: mnist_model_1.onnx
       hash: md5
-      md5: 55cd06ea74ec2b6c71315711f2bdc3f0
-      size: 107357
+      md5: e80ffb032cec5a7782c13f6d97ba65bc
+      size: 107211
     - path: mnist_model_128.onnx
       hash: md5
-      md5: 7d20060499e07942a67f7e1cd70d216b
-      size: 107368
+      md5: 7df034f95b348ebb3aea7d48f9a224be
+      size: 107222
     - path: mnist_model_16.onnx
       hash: md5
-      md5: 47eddd6b6036c61d9daeeae1a828190f
-      size: 107360
+      md5: ecc9cd40164099c796f57b210bfe2020
+      size: 107214
     - path: mnist_model_2.onnx
       hash: md5
-      md5: b572c7904772793c1ec7a4f96ef7f062
-      size: 107357
+      md5: c4216ac30d26bbb5f64777dad64d9525
+      size: 107211
     - path: mnist_model_256.onnx
       hash: md5
-      md5: 2b8f4c567573ac6d1d460e2c4199ba82
-      size: 107368
+      md5: 22c546996c0f4900bb8711c8719fc527
+      size: 107222
     - path: mnist_model_32.onnx
       hash: md5
-      md5: 1b397636771c6b62d5cf01f6b4690ab3
-      size: 107360
+      md5: 87fb7a61c3c76b1c577878dfe6eaa462
+      size: 107214
     - path: mnist_model_4.onnx
       hash: md5
-      md5: c9327302b437d5e209f39fccc57c47ec
-      size: 107357
+      md5: 1d72886180cb197a3329f95ab403ba97
+      size: 107211
     - path: mnist_model_64.onnx
       hash: md5
-      md5: 83c9aa2b344bb4e8371382e53864ac4e
-      size: 107360
+      md5: 98005a5ef4b02731b753a0f1dbcda526
+      size: 107214
     - path: mnist_model_8.onnx
       hash: md5
-      md5: 903ad7b4f57f271d12d22c70ce09f365
-      size: 107357
+      md5: 6e1721d8e611998bba58091958f8170c
+      size: 107211
   measure:
     cmd: python measure.py
     deps:
@@ -123,44 +123,44 @@ stages:
       size: 582
     - path: measure.py
       hash: md5
-      md5: df8308c6384385417ac6ea185cada9cd
-      size: 15246
+      md5: 88a37e4c6aadf8b28a17216098f93e8c
+      size: 15254
     - path: mnist_model_1.onnx
       hash: md5
-      md5: 55cd06ea74ec2b6c71315711f2bdc3f0
-      size: 107357
+      md5: e80ffb032cec5a7782c13f6d97ba65bc
+      size: 107211
     - path: mnist_model_128.onnx
       hash: md5
-      md5: 7d20060499e07942a67f7e1cd70d216b
-      size: 107368
+      md5: 7df034f95b348ebb3aea7d48f9a224be
+      size: 107222
     - path: mnist_model_16.onnx
       hash: md5
-      md5: 47eddd6b6036c61d9daeeae1a828190f
-      size: 107360
+      md5: ecc9cd40164099c796f57b210bfe2020
+      size: 107214
     - path: mnist_model_2.onnx
       hash: md5
-      md5: b572c7904772793c1ec7a4f96ef7f062
-      size: 107357
+      md5: c4216ac30d26bbb5f64777dad64d9525
+      size: 107211
     - path: mnist_model_256.onnx
       hash: md5
-      md5: 2b8f4c567573ac6d1d460e2c4199ba82
-      size: 107368
+      md5: 22c546996c0f4900bb8711c8719fc527
+      size: 107222
     - path: mnist_model_32.onnx
       hash: md5
-      md5: 1b397636771c6b62d5cf01f6b4690ab3
-      size: 107360
+      md5: 87fb7a61c3c76b1c577878dfe6eaa462
+      size: 107214
     - path: mnist_model_4.onnx
       hash: md5
-      md5: c9327302b437d5e209f39fccc57c47ec
-      size: 107357
+      md5: 1d72886180cb197a3329f95ab403ba97
+      size: 107211
     - path: mnist_model_64.onnx
       hash: md5
-      md5: 83c9aa2b344bb4e8371382e53864ac4e
-      size: 107360
+      md5: 98005a5ef4b02731b753a0f1dbcda526
+      size: 107214
     - path: mnist_model_8.onnx
       hash: md5
-      md5: 903ad7b4f57f271d12d22c70ce09f365
-      size: 107357
+      md5: 6e1721d8e611998bba58091958f8170c
+      size: 107211
     - path: test_data.pt
       hash: md5
       md5: 85ba9721e8544873a4c67cc49a237d99
@@ -171,17 +171,17 @@ stages:
     outs:
     - path: latency_results.json
       hash: md5
-      md5: 7f5d8e9120bde569160cb0bef859439f
-      size: 2914
+      md5: 8bbbceee058f488ef8e45962a37660d6
+      size: 2911
     - path: tensorrt_inteference.txt
       hash: md5
-      md5: 06de684255bb11793e102dc3a24aa6d9
-      size: 32645
+      md5: 9f03ab444f5c9ec7e5eeab915ced249e
+      size: 32681
     - path: throughput_results.json
       hash: md5
-      md5: 52a328a1df3322764025a7b5cc9a6ad5
-      size: 1331
+      md5: ad9af16aa12c14e723248c0dae907d94
+      size: 1334
     - path: throughput_results_2.json
       hash: md5
-      md5: 52a328a1df3322764025a7b5cc9a6ad5
-      size: 1331
+      md5: ad9af16aa12c14e723248c0dae907d94
+      size: 1334

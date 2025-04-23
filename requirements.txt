@@ -8,6 +8,7 @@ torchvision==0.21.0
 matplotlib==3.10.1
 numpy==2.2.5
 PyYAML==6.0.2
-tensorrt
+#tensorrt
 scikit-learn==1.6.1
 onnxscript==0.2.4
+dvc==3.59.1

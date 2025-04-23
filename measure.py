@@ -289,7 +289,7 @@ def run_inference_with_energy_measurements():
     print(f"Total Energ Consumption: {total_energy_mwh:.4f} mWh")
 
 if __name__ == "__main__":
-    onnx_model_path="mnist_model.onnx"
+    onnx_model_path="mnist_model_128.onnx"
     data_path = "test_data.pt"
     batch_size = 128
 
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     throughput_log, latency_log = calculate_latency_and_throughput(context, batch_sizes)
 
     profile = onnx_tool.model_profile(onnx_model_path, None, None)
-    onnx_model = onnx.load("mnist_model.onnx")
+    onnx_model = onnx.load("mnist_model_128.onnx")
     for input_tensor in onnx_model.graph.input:
         print(input_tensor)
 
