@@ -6,11 +6,6 @@ import time
 import json
 import onnx_tool
 import torch
-import psutil
-import gc
-from pyJoules.energy_meter import measure_energy
-from pyJoules.device.rapl_device import RaplPackageDomain
-from pyJoules.device.nvidia_device import NvidiaGPUDomain
 import pynvml
 import onnx
 
@@ -291,7 +286,7 @@ def run_inference_with_energy_measurements():
         total_energy_joules += power_draw * elapsed_time
 
     total_energy_mwh = total_energy_joules / 3600 * 1000  # Joule in Milliwattstunden umrechnen
-    print(f"Total Energy Consumption: {total_energy_mwh:.4f} mWh")
+    print(f"Total Energ Consumption: {total_energy_mwh:.4f} mWh")
 
 if __name__ == "__main__":
     onnx_model_path="mnist_model.onnx"
@@ -305,7 +300,7 @@ if __name__ == "__main__":
     device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
     correct_predictions, total_predictions = run_inference(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size)
-    print(f"Accuracy: {correct_predictions / total_predictions:.2%}")
+    print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
 
     batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
     context=0

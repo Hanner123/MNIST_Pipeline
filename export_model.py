@@ -17,7 +17,8 @@ for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256]:
 
 
     # vergleich: inteferenz mit 16, 32, 64, 128 Batch size auf 128 Batch Size Model (Latenz) #
-    # vergleich: inteferenz mit 16, 32, 64, 128 Batch size auf 16, 32, 64, 128 Batch Size Model
+    # vergleich: inteferenz mit 16, 32, 64, 128 Batch size auf 16, 32, 64, 128 Batch Size Model 
+    # es gibt einen Unterschied!!!
 
     model = torch.load("full_model.pth", map_location="cpu", weights_only=False)
 

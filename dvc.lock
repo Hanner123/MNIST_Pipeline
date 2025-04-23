@@ -9,12 +9,12 @@ stages:
       size: 7202
     params:
       params.yaml:
-        train.batch_size: 256
-        train.lr: 0.2
+        train.batch_size: 128
+        train.lr: 0.22
     outs:
     - path: full_model.pth
       hash: md5
-      md5: 8bed184ac9407254ce697f34ff489904
+      md5: 6e3d89e92a05952ea274ae9b5c2be032
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -22,8 +22,8 @@ stages:
       size: 7921764
     - path: training_data.json
       hash: md5
-      md5: 2b705217f7c9fce2b33edf933785aea6
-      size: 445
+      md5: 860b9b8ae3697d945cf64c7128f9a24d
+      size: 459
   evaluate:
     cmd: python evaluate.py
     deps:
@@ -33,7 +33,7 @@ stages:
       size: 5782
     - path: full_model.pth
       hash: md5
-      md5: 8bed184ac9407254ce697f34ff489904
+      md5: 6e3d89e92a05952ea274ae9b5c2be032
       size: 104808
     - path: test_data.pt
       hash: md5
@@ -41,71 +41,71 @@ stages:
       size: 7921764
     params:
       params.yaml:
-        train.batch_size: 256
+        train.batch_size: 128
     outs:
     - path: confusion_matrix.csv
       hash: md5
-      md5: f83f695b4e61339fa0061a8610a18225
-      size: 311
+      md5: 056a0650f40c6241bef83d75d82ac5f5
+      size: 300
     - path: loss.png
       hash: md5
-      md5: a8c9384e82fe74e2a5f220f96a132cb7
-      size: 27220
+      md5: 436d660b610db2dc2a791b767c648ab4
+      size: 24566
     - path: metrics.json
       hash: md5
-      md5: a99f2f37ca7207e343040b8e587cc0f6
-      size: 926
+      md5: e950da5637cc64beb450bb025564499a
+      size: 931
   export:
     cmd: python export_model.py
     deps:
     - path: export_model.py
       hash: md5
-      md5: 11b9a8c4a6a57728cd8acd980e0ec166
-      size: 1098
+      md5: c78e35bb92a50589aad24e940cb31de1
+      size: 1134
     - path: full_model.pth
       hash: md5
-      md5: 8bed184ac9407254ce697f34ff489904
+      md5: 6e3d89e92a05952ea274ae9b5c2be032
       size: 104808
     params:
       params.yaml:
-        train.batch_size: 256
+        train.batch_size: 128
     outs:
     - path: mnist_model_1.onnx
       hash: md5
-      md5: bb43d8c9f443be2702dcb0af8545338d
-      size: 107736
+      md5: 55cd06ea74ec2b6c71315711f2bdc3f0
+      size: 107357
     - path: mnist_model_128.onnx
       hash: md5
-      md5: 03f87d22cae1def2619f88313235fdc3
-      size: 107747
+      md5: 7d20060499e07942a67f7e1cd70d216b
+      size: 107368
     - path: mnist_model_16.onnx
       hash: md5
-      md5: aa6baa1315d16ba6fa7c944007abd89a
-      size: 107739
+      md5: 47eddd6b6036c61d9daeeae1a828190f
+      size: 107360
     - path: mnist_model_2.onnx
       hash: md5
-      md5: 69c12bdff457f082f27b480d1f42b0b1
-      size: 107736
+      md5: b572c7904772793c1ec7a4f96ef7f062
+      size: 107357
     - path: mnist_model_256.onnx
       hash: md5
-      md5: 74dc0baf78dffbf8ec3adaa29d6a9818
-      size: 107747
+      md5: 2b8f4c567573ac6d1d460e2c4199ba82
+      size: 107368
     - path: mnist_model_32.onnx
       hash: md5
-      md5: 8e4047be16e8ab8a00be6de336675335
-      size: 107739
+      md5: 1b397636771c6b62d5cf01f6b4690ab3
+      size: 107360
     - path: mnist_model_4.onnx
       hash: md5
-      md5: 4e9aef5bd2a0e514360a7acef4910de2
-      size: 107736
+      md5: c9327302b437d5e209f39fccc57c47ec
+      size: 107357
     - path: mnist_model_64.onnx
       hash: md5
-      md5: 0c73d620bc25bd9240c59b782313e5b8
-      size: 107739
+      md5: 83c9aa2b344bb4e8371382e53864ac4e
+      size: 107360
     - path: mnist_model_8.onnx
       hash: md5
-      md5: ecb62cb3bfc455e12a76c535191e2973
-      size: 107736
+      md5: 903ad7b4f57f271d12d22c70ce09f365
+      size: 107357
   measure:
     cmd: python measure.py
     deps:
@@ -123,65 +123,65 @@ stages:
       size: 582
     - path: measure.py
       hash: md5
-      md5: 5d6f5645092386a12288fc7cb9298ef1
-      size: 15435
+      md5: df8308c6384385417ac6ea185cada9cd
+      size: 15246
     - path: mnist_model_1.onnx
       hash: md5
-      md5: bb43d8c9f443be2702dcb0af8545338d
-      size: 107736
+      md5: 55cd06ea74ec2b6c71315711f2bdc3f0
+      size: 107357
     - path: mnist_model_128.onnx
       hash: md5
-      md5: 03f87d22cae1def2619f88313235fdc3
-      size: 107747
+      md5: 7d20060499e07942a67f7e1cd70d216b
+      size: 107368
     - path: mnist_model_16.onnx
       hash: md5
-      md5: aa6baa1315d16ba6fa7c944007abd89a
-      size: 107739
+      md5: 47eddd6b6036c61d9daeeae1a828190f
+      size: 107360
     - path: mnist_model_2.onnx
       hash: md5
-      md5: 69c12bdff457f082f27b480d1f42b0b1
-      size: 107736
+      md5: b572c7904772793c1ec7a4f96ef7f062
+      size: 107357
     - path: mnist_model_256.onnx
       hash: md5
-      md5: 74dc0baf78dffbf8ec3adaa29d6a9818
-      size: 107747
+      md5: 2b8f4c567573ac6d1d460e2c4199ba82
+      size: 107368
     - path: mnist_model_32.onnx
       hash: md5
-      md5: 8e4047be16e8ab8a00be6de336675335
-      size: 107739
+      md5: 1b397636771c6b62d5cf01f6b4690ab3
+      size: 107360
     - path: mnist_model_4.onnx
       hash: md5
-      md5: 4e9aef5bd2a0e514360a7acef4910de2
-      size: 107736
+      md5: c9327302b437d5e209f39fccc57c47ec
+      size: 107357
     - path: mnist_model_64.onnx
       hash: md5
-      md5: 0c73d620bc25bd9240c59b782313e5b8
-      size: 107739
+      md5: 83c9aa2b344bb4e8371382e53864ac4e
+      size: 107360
     - path: mnist_model_8.onnx
       hash: md5
-      md5: ecb62cb3bfc455e12a76c535191e2973
-      size: 107736
+      md5: 903ad7b4f57f271d12d22c70ce09f365
+      size: 107357
     - path: test_data.pt
       hash: md5
       md5: 85ba9721e8544873a4c67cc49a237d99
       size: 7921764
     params:
       params.yaml:
-        train.batch_size: 256
+        train.batch_size: 128
     outs:
     - path: latency_results.json
       hash: md5
-      md5: 15aaf6fd65687417f58a87c57a942d07
-      size: 2912
+      md5: 7f5d8e9120bde569160cb0bef859439f
+      size: 2914
     - path: tensorrt_inteference.txt
       hash: md5
       md5: 06de684255bb11793e102dc3a24aa6d9
       size: 32645
     - path: throughput_results.json
       hash: md5
-      md5: 86916f311f91628d1d9dd3f5bad47a4f
-      size: 1326
+      md5: 52a328a1df3322764025a7b5cc9a6ad5
+      size: 1331
     - path: throughput_results_2.json
       hash: md5
-      md5: 86916f311f91628d1d9dd3f5bad47a4f
-      size: 1326
+      md5: 52a328a1df3322764025a7b5cc9a6ad5
+      size: 1331
