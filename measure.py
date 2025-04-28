@@ -336,22 +336,7 @@ if __name__ == "__main__":
 
 
 
-
-# torch tensorrt - trt_model, größere batch sizes - sinnvolles ergebnis?
-# https://pytorch.org/TensorRT/_notebooks/dynamic-shapes.html,  min_shape=(16, 3, 224, 224)
-# https://pytorch.org/TensorRT/getting_started/quick_start.html
-# aufwendige Methode: 
-
-
-
-
-
-
-
-
-
-
-# 14.04. / 15.04.
+# 23.04. / 28.04. / 29.04.
 # Quantisierung auf 8 Bit, größeres Modell (Transformer Sprachmodell) BERT nach Pytorch tutorial, Pytorch & Brevitas (Export: QDQ), unter 1h, tensorrt nutzen
 # Beispiel: https://github.com/iksnagreb/radioml-transformer/blob/master/model.py
 # anderer Export, 8/16/32 Bit
